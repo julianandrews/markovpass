@@ -13,11 +13,12 @@ fn clean_word(word: &str, min_length: usize) -> Option<&str> {
 }
 
 fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<String> {
-    let words: Vec<&str> = Some("").into_iter().chain(
-        corpus.split_whitespace().filter_map(|word| clean_word(word, min_word_length))
-        ).collect();
-    let cleaned_corpus = words.join(" ");
-    let count = cleaned_corpus.chars().count() - ngram_length + 1;
+    let words = corpus.split_whitespace()
+      .filter_map(|word| clean_word(word, min_word_length));
+    let cleaned_corpus = Some("").into_iter().chain(words).collect::<Vec<&str>>().join(" ");
+    let char_count = cleaned_corpus.chars().count();
+    if char_count < ngram_length { return vec![]; };
+    let count = char_count - ngram_length + 1;
     let mut chars = cleaned_corpus.chars();
 
     let mut ngrams = Vec::with_capacity(count);
