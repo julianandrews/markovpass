@@ -15,26 +15,65 @@ impl<T: Hash + Eq + Clone> MarkovNode<T> {
         MarkovNode { value: value.clone(), dist: dist }
     }
 
-    pub fn get_transition(&self) -> &T {
+    pub fn next(&self) -> &T {
         self.dist.choice()
+    }
+
+    pub fn entropy(&self) -> f64 {
+        self.dist.entropy
     }
 }
 
-pub fn build_markov_chain<T: Hash + Eq + Clone, U: Clone>(
-    ngrams: U
-    ) -> HashMap<T, MarkovNode<T>> where U: Iterator<Item=T> {
-    let mut transition_map = HashMap::new();
-    let mut ngrams_copy = ngrams.clone().cycle();
-    ngrams_copy.next();
-    for (a, b) in ngrams.zip(ngrams_copy) {
-        let transitions = transition_map.entry(a).or_insert(HashMap::new());
-        let count = transitions.entry(b).or_insert(0);
-        *count += 1;
-    };
-    let mut chain = HashMap::new();
-    for (ngram, transition_counts) in &transition_map {
-        let node = MarkovNode::new(ngram.clone(), transition_counts);
-        chain.insert(ngram.clone(), node);
-    };
-    chain
+pub struct PassphraseMarkovChain {
+    nodes: HashMap<String, MarkovNode<String>>,
+    starting_dist: AliasDistribution<String>,
+}
+
+impl PassphraseMarkovChain {
+    pub fn new<U: Clone>(ngrams: U) -> PassphraseMarkovChain where U: Iterator<Item=String> {
+        let mut transition_map = HashMap::new();
+        let mut starting_counts = HashMap::new();
+        let mut ngrams_copy = ngrams.clone().cycle();
+        ngrams_copy.next();
+        for (a, b) in ngrams.zip(ngrams_copy) {
+            if b.starts_with(" ") {
+                let count = starting_counts.entry(b.clone()).or_insert(0);
+                *count += 1
+            }
+            let transitions = transition_map.entry(a).or_insert(HashMap::new());
+            let count = transitions.entry(b).or_insert(0);
+            *count += 1;
+        };
+
+        let mut nodes = HashMap::new();
+        for (ngram, transition_counts) in &transition_map {
+            let node = MarkovNode::new(ngram.clone(), transition_counts);
+            nodes.insert(ngram.clone(), node);
+        };
+
+        PassphraseMarkovChain {
+            nodes: nodes,
+            starting_dist: AliasDistribution::new(&starting_counts),
+        }
+    }
+
+    pub fn get_node(&self) -> &MarkovNode<String> {
+        self.nodes.get(self.starting_dist.choice()).unwrap()
+    }
+
+    pub fn passphrase(&self, min_entropy: f64) -> (String, f64) {
+        let mut node = self.get_node();
+        let mut entropy = self.starting_dist.entropy;
+        let mut nodes = Vec::new();
+        loop {
+            nodes.push(node);
+            entropy += node.entropy();
+            if entropy >= min_entropy && node.value.ends_with(" ") { break };
+            node = self.nodes.get(node.next()).unwrap();
+        }
+        let tail = nodes.last().unwrap().value.chars().skip(1);
+        let chars = nodes.iter().map(|n| n.value.chars().next().unwrap()).chain(tail);
+        let passphrase = chars.collect::<String>().trim().to_string();
+        (passphrase, entropy)
+    }
 }

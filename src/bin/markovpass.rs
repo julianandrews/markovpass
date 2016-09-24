@@ -1,6 +1,8 @@
 extern crate getopts;
 extern crate markovpass;
 
+use markovpass::PassphraseMarkovChain;
+
 fn clean_word(word: &str, min_length: usize) -> Option<&str> {
     let word = word.trim_matches(|c: char| !c.is_alphabetic());
     if word.chars().all(|c: char| c.is_alphabetic()) && word.len() >= min_length {
@@ -11,9 +13,9 @@ fn clean_word(word: &str, min_length: usize) -> Option<&str> {
 }
 
 fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<String> {
-    let words: Vec<&str> = corpus.split_whitespace()
-        .filter_map(|word| clean_word(word, min_word_length))
-        .collect();
+    let words: Vec<&str> = Some("").into_iter().chain(
+        corpus.split_whitespace().filter_map(|word| clean_word(word, min_word_length))
+        ).collect();
     let cleaned_corpus = words.join(" ");
     let count = cleaned_corpus.chars().count() - ngram_length + 1;
     let mut chars = cleaned_corpus.chars();
@@ -38,14 +40,14 @@ fn main() {
     let mut opts = getopts::Options::new();
     let program = args[0].clone();
 
-    // opts.optopt("n", "", "Number of passphrases to generate (default 1)", "NUM");
-    // opts.optopt("m", "", "Minimum entropy (default 60)", "MINENTROPY");
+    opts.optopt("n", "", "Number of passphrases to generate (default 1)", "NUM");
+    opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
     opts.optopt("l", "", "NGram length (default 3)", "LENGTH");
-    opts.optopt("w", "", "Minimum word length for corpus (default 1)", "LENGTH");
+    opts.optopt("w", "", "Minimum word length for corpus (default 5)", "LENGTH");
     opts.optflag("h", "help", "display this help and exit");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m },
-        Err(_) => { 
+        Err(_) => {
             print_usage(&program, opts);
             return;
         },
@@ -70,17 +72,17 @@ fn main() {
         }
     }
 
-    // let number = get_usize_flag!("n", 1);
-    // let min_entropy = get_usize_flag!("m", 60);
+    let number = get_usize_flag!("n", 1);
+    let min_entropy = get_usize_flag!("e", 60);
     let ngram_length = get_usize_flag!("l", 3);
-    let min_word_length = get_usize_flag!("w", 1);
-    
+    let min_word_length = get_usize_flag!("w", 5);
+
     if matches.free.len() > 1 {
         print_usage(&program, opts);
         return;
     };
 
-    let filename = if matches.free.is_empty() { 
+    let filename = if matches.free.is_empty() {
         "-".to_string()
     } else {
         matches.free[0].clone()
@@ -103,7 +105,10 @@ fn main() {
     input.read_to_string(&mut corpus).expect("Failed to read string");
 
     let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
-    let chain = markovpass::build_markov_chain(ngrams.iter());
-    let node = chain.values().next().unwrap();
-    println!("{} -> {}", node.value, node.get_transition());
+    let chain = PassphraseMarkovChain::new(ngrams.iter().cloned());
+
+    for _ in 0..number {
+        let (passphrase, entropy) = chain.passphrase(min_entropy as f64);
+        println!("{} <{}>", passphrase, entropy);
+    }
 }
