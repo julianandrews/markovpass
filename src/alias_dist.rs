@@ -3,7 +3,6 @@ extern crate rand;
 use self::rand::Rng;
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::ops::Add;
 
 #[derive(Debug)]
 pub struct AliasDistribution<T: Hash + Eq + Clone> {
@@ -17,8 +16,8 @@ pub struct AliasDistribution<T: Hash + Eq + Clone> {
 impl<T: Hash + Eq + Clone> AliasDistribution<T> {
     pub fn new(weights: &HashMap<T, usize>) -> AliasDistribution<T> {
         let size = weights.len();
-        let total = weights.values().fold(0, Add::add) as f64;
-        let mut entropy = 0.0_f64;
+        let total = weights.values().fold(0, |sum, x| sum + x) as f64;
+        let mut entropy = 0.0;
 
         let mut values = Vec::with_capacity(size);
         let mut probability_table = Vec::with_capacity(size);
@@ -40,9 +39,8 @@ impl<T: Hash + Eq + Clone> AliasDistribution<T> {
             let i = underfull.pop().unwrap();
             let j = overfull.pop().unwrap();
             alias_table[i] = j;
-            let new_prob = probability_table[i] + probability_table[j] - 1.0;
-            probability_table[j] = new_prob;
-            if new_prob < 1.0 { underfull.push(j) } else { overfull.push(j) };
+            probability_table[j] = probability_table[i] + probability_table[j] - 1.0;
+            if probability_table[j] < 1.0 { underfull.push(j) } else { overfull.push(j) };
         };
         for i in underfull.iter().chain(overfull.iter()) {
             alias_table[*i] = 1;
@@ -57,11 +55,12 @@ impl<T: Hash + Eq + Clone> AliasDistribution<T> {
         }
     }
 
-    pub fn choice(&self) -> &T {
+    pub fn choice(&self) -> Option<&T> {
+        if self.size == 0 { return None; };
         let mut rng = rand::thread_rng();
         let i = rng.gen_range(0, self.size);
         let y = rng.gen();
         let choice = if self.probability_table[i] >= y { i } else { self.alias_table[i] };
-        &self.values[choice]
+        Some(&self.values[choice])
     }
 }

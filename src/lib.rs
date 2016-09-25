@@ -17,7 +17,7 @@ impl<T: Hash + Eq + Clone> MarkovNode<T> {
     }
 
     pub fn next(&self) -> &T {
-        self.dist.choice()
+        self.dist.choice().unwrap()
     }
 
     pub fn entropy(&self) -> f64 {
@@ -32,7 +32,8 @@ pub struct PassphraseMarkovChain {
 }
 
 impl PassphraseMarkovChain {
-    pub fn new<U: Clone>(ngrams: U) -> Result<PassphraseMarkovChain, &'static str> where U: Iterator<Item=String> {
+    pub fn new<U: Clone>(ngrams: U) -> Result<PassphraseMarkovChain, &'static str>
+            where U: Iterator<Item=String> {
         let mut transition_map = HashMap::new();
         let mut starting_counts = HashMap::new();
         let mut ngrams_copy = ngrams.clone().cycle();
@@ -69,7 +70,7 @@ impl PassphraseMarkovChain {
     }
 
     pub fn get_node(&self) -> &MarkovNode<String> {
-        self.nodes.get(self.starting_dist.choice()).unwrap()
+        self.nodes.get(self.starting_dist.choice().unwrap()).unwrap()
     }
 
     pub fn passphrase(&self, min_entropy: f64) -> (String, f64) {
