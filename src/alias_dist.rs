@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::ops::Add;
 
+#[derive(Debug)]
 pub struct AliasDistribution<T: Hash + Eq + Clone> {
     size: usize,
     values: Vec<T>,

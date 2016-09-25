@@ -2,6 +2,7 @@ extern crate getopts;
 extern crate markovpass;
 
 use markovpass::PassphraseMarkovChain;
+use std::io::Write;
 
 fn clean_word(word: &str, min_length: usize) -> Option<&str> {
     let word = word.trim_matches(|c: char| !c.is_alphabetic());
@@ -89,13 +90,20 @@ fn main() {
         matches.free[0].clone()
     };
 
+    macro_rules! write_error {
+        ($message:expr) => {
+            let r = writeln!(&mut std::io::stderr(), "{}: {}: {}", &program, &filename, $message);
+            r.expect("failed printing to stderr");
+        }
+    }
+
     let mut input: Box<std::io::Read> = if filename == "-" {
         Box::new(std::io::stdin())
     } else {
         let file = match std::fs::File::open(&filename) {
             Ok(file) => file,
             Err(_) => {
-                println!("{}: {}: {:?}", &program, &filename, "Failed to read input");
+                write_error!("Failed to read input.");
                 return;
             },
         };
@@ -103,10 +111,26 @@ fn main() {
     };
 
     let mut corpus = String::new();
-    input.read_to_string(&mut corpus).expect("Failed to read string");
+    match input.read_to_string(&mut corpus) {
+        Err(_) => {
+            write_error!("Failed to read input.");
+            return;
+        },
+        Ok(_) => {},
+    }
 
     let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
-    let chain = PassphraseMarkovChain::new(ngrams.iter().cloned());
+    if ngrams.is_empty() {
+        write_error!("No NGrams found.");
+        return;
+    };
+    let chain = match PassphraseMarkovChain::new(ngrams.iter().cloned()) {
+        Ok(chain) => chain,
+        Err(e) => {
+            write_error!(&e);
+            return;
+        }
+    };
 
     for _ in 0..number {
         let (passphrase, entropy) = chain.passphrase(min_entropy as f64);

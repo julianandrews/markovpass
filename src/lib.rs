@@ -4,6 +4,7 @@ use alias_dist::AliasDistribution;
 use std::collections::HashMap;
 use std::hash::Hash;
 
+#[derive(Debug)]
 pub struct MarkovNode<T: Hash + Eq + Clone> {
     pub value: T,
     dist: AliasDistribution<T>,
@@ -24,13 +25,14 @@ impl<T: Hash + Eq + Clone> MarkovNode<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct PassphraseMarkovChain {
     nodes: HashMap<String, MarkovNode<String>>,
     starting_dist: AliasDistribution<String>,
 }
 
 impl PassphraseMarkovChain {
-    pub fn new<U: Clone>(ngrams: U) -> PassphraseMarkovChain where U: Iterator<Item=String> {
+    pub fn new<U: Clone>(ngrams: U) -> Result<PassphraseMarkovChain, &'static str> where U: Iterator<Item=String> {
         let mut transition_map = HashMap::new();
         let mut starting_counts = HashMap::new();
         let mut ngrams_copy = ngrams.clone().cycle();
@@ -45,16 +47,25 @@ impl PassphraseMarkovChain {
             *count += 1;
         };
 
+        let mut total_entropy: f64 = 0.0;
         let mut nodes = HashMap::new();
         for (ngram, transition_counts) in &transition_map {
             let node = MarkovNode::new(ngram.clone(), transition_counts);
+            total_entropy += node.entropy();
             nodes.insert(ngram.clone(), node);
         };
+        let starting_dist = AliasDistribution::new(&starting_counts);
 
-        PassphraseMarkovChain {
+        if total_entropy == 0.0 {
+            return Err("No entropy found in input.");
+        } else if starting_dist.entropy == 0.0 {
+            return Err("No start of word entropy found in input.");
+        };
+
+        Ok(PassphraseMarkovChain {
             nodes: nodes,
-            starting_dist: AliasDistribution::new(&starting_counts),
-        }
+            starting_dist: starting_dist,
+        })
     }
 
     pub fn get_node(&self) -> &MarkovNode<String> {
