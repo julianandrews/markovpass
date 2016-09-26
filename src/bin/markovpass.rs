@@ -4,6 +4,17 @@ extern crate markovpass;
 use markovpass::PassphraseMarkovChain;
 use std::io::Write;
 
+fn build_opts() -> getopts::Options {
+    let mut opts = getopts::Options::new();
+
+    opts.optopt("n", "", "Number of passphrases to generate (default 1)", "NUM");
+    opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
+    opts.optopt("l", "", "NGram length (default 3)", "LENGTH");
+    opts.optopt("w", "", "Minimum word length for corpus (default 5)", "LENGTH");
+    opts.optflag("h", "help", "display this help and exit");
+    opts
+}
+
 fn get_corpus(filename: &str) -> Result<String, std::io::Error> {
     let mut input: Box<std::io::Read> = if filename == "-" {
         Box::new(std::io::stdin())
@@ -67,15 +78,8 @@ fn write_error(program: &str, filename: &str, message: &str) {
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-
-    let mut opts = getopts::Options::new();
     let program = args[0].clone();
-
-    opts.optopt("n", "", "Number of passphrases to generate (default 1)", "NUM");
-    opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
-    opts.optopt("l", "", "NGram length (default 3)", "LENGTH");
-    opts.optopt("w", "", "Minimum word length for corpus (default 5)", "LENGTH");
-    opts.optflag("h", "help", "display this help and exit");
+    let opts = build_opts();
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => { m },
