@@ -57,7 +57,7 @@ impl<T: Hash + Eq + Clone> AliasDistribution<T> {
 
     pub fn choice(&self) -> Option<&T> {
         if self.size == 0 { return None; };
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::OsRng::new().unwrap();
         let i = rng.gen_range(0, self.size);
         let y = rng.gen();
         let choice = if self.probability_table[i] >= y { i } else { self.alias_table[i] };
