@@ -61,6 +61,7 @@ impl<T: Hash + Eq + Clone> AliasDistribution<T> {
         let i = rng.gen_range(0, self.size);
         let y = rng.gen();
         let choice = if self.probability_table[i] >= y { i } else { self.alias_table[i] };
+
         Some(&self.values[choice])
     }
 }

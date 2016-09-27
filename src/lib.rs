@@ -12,8 +12,10 @@ pub struct MarkovNode<T: Hash + Eq + Clone> {
 
 impl<T: Hash + Eq + Clone> MarkovNode<T> {
     pub fn new(value: T, counts: &HashMap<T, usize>) -> MarkovNode<T> {
-        let dist = AliasDistribution::new(&counts);
-        MarkovNode { value: value.clone(), dist: dist }
+        MarkovNode {
+            value: value.clone(),
+            dist: AliasDistribution::new(&counts),
+        }
     }
 
     pub fn next(&self) -> &T {
@@ -86,6 +88,7 @@ impl PassphraseMarkovChain {
         let tail = nodes.last().unwrap().value.chars().skip(1);
         let chars = nodes.iter().map(|n| n.value.chars().next().unwrap()).chain(tail);
         let passphrase = chars.collect::<String>().trim().to_string();
+
         (passphrase, entropy)
     }
 }

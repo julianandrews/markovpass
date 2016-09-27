@@ -6,13 +6,50 @@ use std::io::Write;
 
 fn build_opts() -> getopts::Options {
     let mut opts = getopts::Options::new();
-
     opts.optopt("n", "", "Number of passphrases to generate (default 1)", "NUM");
     opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
     opts.optopt("l", "", "NGram length (default 3)", "LENGTH");
     opts.optopt("w", "", "Minimum word length for corpus (default 5)", "LENGTH");
     opts.optflag("h", "help", "display this help and exit");
+
     opts
+}
+
+fn parse_args(opts: &getopts::Options, args: &Vec<String>)
+        -> Result<(String, usize, f64, usize, usize), &'static str> {
+    let matches = match opts.parse(&args[1..]) {
+        Ok(x) => { x },
+        Err(_) => { return Err("Failed to parse arguments."); },
+    };
+
+    if matches.opt_present("h") || matches.free.len() > 1 {
+        return Err("Failed to parse arguments.");
+    };
+
+    macro_rules! get_num_flag {
+        ($num_type:ty, $flag:expr, $default:expr) => {
+            match matches.opt_str($flag) {
+                Some(s) => match s.parse::<$num_type>() {
+                    Ok(n) => { n },
+                    Err(_) => { return Err("Failed to parse arguments."); }
+                },
+                None => $default,
+            }
+        }
+    }
+
+    let number = get_num_flag!(usize, "n", 1);
+    let min_entropy = get_num_flag!(f64, "e", 60.0);
+    let ngram_length = get_num_flag!(usize, "l", 3);
+    let min_word_length = get_num_flag!(usize, "w", 5);
+
+    let filename = if matches.free.is_empty() {
+        "-".to_string()
+    } else {
+        matches.free[0].clone()
+    };
+
+    Ok((filename, number, min_entropy, ngram_length, min_word_length))
 }
 
 fn get_corpus(filename: &str) -> Result<String, std::io::Error> {
@@ -22,14 +59,15 @@ fn get_corpus(filename: &str) -> Result<String, std::io::Error> {
         let file = try!(std::fs::File::open(&filename));
         Box::new(file)
     };
-
     let mut corpus = String::new();
     try!(input.read_to_string(&mut corpus));
+
     Ok(corpus)
 }
 
 fn clean_word(word: &str, min_length: usize) -> Option<&str> {
     let word = word.trim_matches(|c: char| !c.is_alphabetic());
+
     if word.chars().all(|c: char| c.is_alphabetic()) && word.len() >= min_length {
         Some(word)
     } else {
@@ -52,6 +90,7 @@ fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<
         ngrams.push(ngram.to_lowercase());
         chars.next();
     };
+
     ngrams
 }
 
@@ -63,10 +102,11 @@ fn gen_passphrases(ngrams: &Vec<String>, number: usize, min_entropy: f64)
     for _ in 0..number {
         passphrases.push(chain.passphrase(min_entropy));
     };
+
     Ok(passphrases)
 }
 
-fn print_usage(program: &str, opts: getopts::Options) {
+fn print_usage(program: &str, opts: &getopts::Options) {
     let brief = format!("Usage: {} [FILE] [options]", program);
     print!("{}", opts.usage(&brief));
 }
@@ -81,44 +121,14 @@ fn main() {
     let program = args[0].clone();
     let opts = build_opts();
 
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m },
+    let (filename, number, min_entropy, ngram_length, min_word_length) =
+            match parse_args(&opts, &args) {
+        Ok(x) => { x },
         Err(_) => {
-            print_usage(&program, opts);
+            print_usage(&program, &opts);
             return;
-        },
-    };
-    if matches.opt_present("h") || matches.free.len() > 1 {
-        print_usage(&program, opts);
-        return;
-    };
-
-    macro_rules! get_num_flag {
-        ($num_type:ty, $flag:expr, $default:expr) => {
-            match matches.opt_str($flag) {
-                Some(s) => match s.parse::<$num_type>() {
-                    Ok(n) => n,
-                    Err(_) => {
-                        print_usage(&program, opts);
-                        return;
-                    },
-                },
-                None => $default,
-            }
         }
-    }
-
-    let number = get_num_flag!(usize, "n", 1);
-    let min_entropy = get_num_flag!(f64, "e", 60.0);
-    let ngram_length = get_num_flag!(usize, "l", 3);
-    let min_word_length = get_num_flag!(usize, "w", 5);
-
-    let filename = if matches.free.is_empty() {
-        "-".to_string()
-    } else {
-        matches.free[0].clone()
     };
-
     let corpus = match get_corpus(&filename) {
         Ok(corpus) => { corpus },
         Err(_) => {
@@ -126,7 +136,6 @@ fn main() {
             return;
         },
     };
-
     let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
     let passphrases = match gen_passphrases(&ngrams, number, min_entropy) {
         Ok(x) => { x },
