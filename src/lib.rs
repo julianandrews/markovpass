@@ -11,10 +11,10 @@ pub struct MarkovNode<T: Hash + Eq + Clone> {
 }
 
 impl<T: Hash + Eq + Clone> MarkovNode<T> {
-    pub fn new(value: T, counts: &HashMap<T, usize>) -> MarkovNode<T> {
+    pub fn new(value: T, counts: HashMap<T, usize>) -> MarkovNode<T> {
         MarkovNode {
             value: value.clone(),
-            dist: AliasDistribution::new(&counts),
+            dist: AliasDistribution::new(counts),
         }
     }
 
@@ -52,12 +52,12 @@ impl PassphraseMarkovChain {
 
         let mut total_entropy: f64 = 0.0;
         let mut nodes = HashMap::new();
-        for (ngram, transition_counts) in &transition_map {
+        for (ngram, transition_counts) in transition_map.into_iter() {
             let node = MarkovNode::new(ngram.clone(), transition_counts);
             total_entropy += node.entropy();
             nodes.insert(ngram.clone(), node);
         };
-        let starting_dist = AliasDistribution::new(&starting_counts);
+        let starting_dist = AliasDistribution::new(starting_counts);
 
         if total_entropy == 0.0 {
             return Err("No entropy found in input.");
