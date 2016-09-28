@@ -111,9 +111,8 @@ fn print_usage(program: &str, opts: &getopts::Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn write_error(program: &str, filename: &str, message: &str) {
-    writeln!(&mut std::io::stderr(), "{}: {}: {}", &program, &filename, &message)
-        .expect("Failed writing to stderr.");
+fn write_error(message: &str) {
+    writeln!(&mut std::io::stderr(), "{}", &message).expect("Failed to write to stderr.");
 }
 
 fn main() {
@@ -129,10 +128,13 @@ fn main() {
             return;
         }
     };
+    if ngram_length < 2 {
+        write_error("Ngram length must be greater than one.");
+    };
     let corpus = match get_corpus(&filename) {
         Ok(corpus) => { corpus },
         Err(_) => {
-            write_error(&program, &filename, "Failed to read input");
+            write_error(&format!("{}: {}: {}", &program, &filename, "Failed to read input."));
             return;
         },
     };
@@ -140,7 +142,7 @@ fn main() {
     let passphrases = match gen_passphrases(ngrams, number, min_entropy) {
         Ok(passphrases) => { passphrases },
         Err(e) => {
-            write_error(&program, &filename, e);
+            write_error(&format!("{}: {}: {}", &program, &filename, e));
             return;
         },
     };
