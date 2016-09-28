@@ -34,8 +34,8 @@ pub struct PassphraseMarkovChain {
 }
 
 impl PassphraseMarkovChain {
-    pub fn new<U: Clone>(ngrams: U) -> Result<PassphraseMarkovChain, &'static str>
-            where U: Iterator<Item=String> {
+    pub fn new<U: Iterator<Item=String> + Clone>(ngrams: U)
+            -> Result<PassphraseMarkovChain, &'static str> {
         let mut transition_map = HashMap::new();
         let mut starting_counts = HashMap::new();
         let mut ngrams_copy = ngrams.clone().cycle();
