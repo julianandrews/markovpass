@@ -123,7 +123,7 @@ fn main() {
 
     let (filename, number, min_entropy, ngram_length, min_word_length) =
             match parse_args(&opts, &args) {
-        Ok(x) => { x },
+        Ok(parsed_args) => { parsed_args },
         Err(_) => {
             print_usage(&program, &opts);
             return;
@@ -138,7 +138,7 @@ fn main() {
     };
     let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
     let passphrases = match gen_passphrases(&ngrams, number, min_entropy) {
-        Ok(x) => { x },
+        Ok(passphrases) => { passphrases },
         Err(e) => {
             write_error(&program, &filename, e);
             return;
