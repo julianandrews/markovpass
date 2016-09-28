@@ -94,7 +94,7 @@ fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<
     ngrams
 }
 
-fn gen_passphrases(ngrams: &Vec<String>, number: usize, min_entropy: f64)
+fn gen_passphrases(ngrams: Vec<String>, number: usize, min_entropy: f64)
         -> Result<Vec<(String, f64)>, &'static str> {
     if ngrams.is_empty() { return Err("No NGrams found."); };
     let chain = try!(PassphraseMarkovChain::new(ngrams.iter().cloned()));
@@ -137,7 +137,7 @@ fn main() {
         },
     };
     let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
-    let passphrases = match gen_passphrases(&ngrams, number, min_entropy) {
+    let passphrases = match gen_passphrases(ngrams, number, min_entropy) {
         Ok(passphrases) => { passphrases },
         Err(e) => {
             write_error(&program, &filename, e);
