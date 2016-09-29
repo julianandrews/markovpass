@@ -24,7 +24,7 @@ fn parse_flag<T: std::str::FromStr>(matches: &getopts::Matches, flag: &str, defa
 }
 
 fn parse_args(opts: &getopts::Options, args: &Vec<String>)
-        -> Result<(String, usize, f64, usize, usize), &'static str> {
+        -> Result<(Option<String>, usize, f64, usize, usize), &'static str> {
     let matches = try!(opts.parse(&args[1..]).map_err(|_| "Failed to parse arguments."));
 
     if matches.opt_present("h") || matches.free.len() > 1 {
@@ -36,21 +36,19 @@ fn parse_args(opts: &getopts::Options, args: &Vec<String>)
     let ngram_length = try!(parse_flag(&matches, "l", 3));
     let min_word_length = try!(parse_flag(&matches, "w", 5));
 
-    let filename = if matches.free.is_empty() {
-        "-".to_string()
+    let filename = if matches.free.is_empty() || matches.free[0] == "-" {
+        None
     } else {
-        matches.free[0].clone()
+        Some(matches.free[0].clone())
     };
 
     Ok((filename, number, min_entropy, ngram_length, min_word_length))
 }
 
-fn get_corpus(filename: &str) -> Result<String, std::io::Error> {
-    let mut input: Box<std::io::Read> = if filename == "-" {
-        Box::new(std::io::stdin())
-    } else {
-        let file = try!(std::fs::File::open(&filename));
-        Box::new(file)
+fn get_corpus(filename: Option<&str>) -> Result<String, std::io::Error> {
+    let mut input: Box<std::io::Read> = match filename {
+        Some(filename) => Box::new(try!(std::fs::File::open(&filename))),
+        None => Box::new(std::io::stdin()),
     };
     let mut corpus = String::new();
     try!(input.read_to_string(&mut corpus));
@@ -124,10 +122,11 @@ fn main() {
     if ngram_length < 2 {
         write_error("Ngram length must be greater than one.");
     };
-    let corpus = match get_corpus(&filename) {
+    let corpus = match get_corpus(filename.as_ref().map(String::as_ref)) {
         Ok(corpus) => { corpus },
         Err(_) => {
-            write_error(&format!("{}: {}: {}", &program, &filename, "Failed to read input."));
+            let filename_str = filename.unwrap_or("-".to_string());
+            write_error(&format!("{}: {}: {}", &program, &filename_str, "Failed to read input."));
             return;
         },
     };
@@ -135,7 +134,7 @@ fn main() {
     let passphrases = match gen_passphrases(ngrams, number, min_entropy) {
         Ok(passphrases) => { passphrases },
         Err(e) => {
-            write_error(&format!("{}: {}: {}", &program, &filename, e));
+            write_error(&format!("{}: {}", &program, e));
             return;
         },
     };
