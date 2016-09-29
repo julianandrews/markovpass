@@ -8,7 +8,7 @@ fn build_opts() -> getopts::Options {
     let mut opts = getopts::Options::new();
     opts.optopt("n", "", "Number of passphrases to generate (default 1)", "NUM");
     opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
-    opts.optopt("l", "", "NGram length (default 3)", "LENGTH");
+    opts.optopt("l", "", "NGram length (default 3, must be > 1)", "LENGTH");
     opts.optopt("w", "", "Minimum word length for corpus (default 5)", "LENGTH");
     opts.optflag("h", "help", "display this help and exit");
 
@@ -35,6 +35,10 @@ fn parse_args(opts: &getopts::Options, args: &Vec<String>)
     let min_entropy = try!(parse_flag(&matches, "e", 60.0));
     let ngram_length = try!(parse_flag(&matches, "l", 3));
     let min_word_length = try!(parse_flag(&matches, "w", 5));
+
+    if ngram_length < 2 {
+        return Err("Ngram length must be greater than one.");
+    };
 
     let filename = if matches.free.is_empty() || matches.free[0] == "-" {
         None
@@ -118,9 +122,6 @@ fn main() {
             print_usage(&program, &opts);
             return;
         }
-    };
-    if ngram_length < 2 {
-        write_error("Ngram length must be greater than one.");
     };
     let corpus = match get_corpus(filename.as_ref().map(String::as_ref)) {
         Ok(corpus) => { corpus },
