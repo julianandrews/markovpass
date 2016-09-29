@@ -15,33 +15,26 @@ fn build_opts() -> getopts::Options {
     opts
 }
 
+fn parse_flag<T: std::str::FromStr>(matches: &getopts::Matches, flag: &str, default: T)
+        -> Result<T, &'static str> {
+    matches.opt_str(flag)
+        .map(|c| c.parse::<T>())
+        .unwrap_or(Ok(default))
+        .map_err(|_| "Failed to parse flag.")
+}
+
 fn parse_args(opts: &getopts::Options, args: &Vec<String>)
         -> Result<(String, usize, f64, usize, usize), &'static str> {
-    let matches = match opts.parse(&args[1..]) {
-        Ok(x) => { x },
-        Err(_) => { return Err("Failed to parse arguments."); },
-    };
+    let matches = try!(opts.parse(&args[1..]).map_err(|_| "Failed to parse arguments."));
 
     if matches.opt_present("h") || matches.free.len() > 1 {
         return Err("Failed to parse arguments.");
     };
 
-    macro_rules! get_num_flag {
-        ($num_type:ty, $flag:expr, $default:expr) => {
-            match matches.opt_str($flag) {
-                Some(s) => match s.parse::<$num_type>() {
-                    Ok(n) => { n },
-                    Err(_) => { return Err("Failed to parse arguments."); }
-                },
-                None => $default,
-            }
-        }
-    }
-
-    let number = get_num_flag!(usize, "n", 1);
-    let min_entropy = get_num_flag!(f64, "e", 60.0);
-    let ngram_length = get_num_flag!(usize, "l", 3);
-    let min_word_length = get_num_flag!(usize, "w", 5);
+    let number = try!(parse_flag(&matches, "n", 1));
+    let min_entropy = try!(parse_flag(&matches, "e", 60.0));
+    let ngram_length = try!(parse_flag(&matches, "l", 3));
+    let min_word_length = try!(parse_flag(&matches, "w", 5));
 
     let filename = if matches.free.is_empty() {
         "-".to_string()
