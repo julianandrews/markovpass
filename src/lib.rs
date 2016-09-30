@@ -5,15 +5,15 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct MarkovNode<T: Hash + Eq + Clone> {
+pub struct MarkovNode<T: Hash + Eq> {
     pub value: T,
     dist: AliasDistribution<T>,
 }
 
-impl<T: Hash + Eq + Clone> MarkovNode<T> {
+impl<T: Hash + Eq> MarkovNode<T> {
     pub fn new(value: T, counts: HashMap<T, usize>) -> MarkovNode<T> {
         MarkovNode {
-            value: value.clone(),
+            value: value,
             dist: AliasDistribution::new(counts),
         }
     }
