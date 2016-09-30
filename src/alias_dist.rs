@@ -34,15 +34,12 @@ impl<T: Hash + Eq> AliasDistribution<T> {
             if *prob < 1.0 { underfull.push(i); } else { overfull.push(i); }
         };
         loop {
-            if overfull.is_empty() || underfull.is_empty() { break }
+            if overfull.is_empty() || underfull.is_empty() { break; };
             let i = underfull.pop().unwrap();
             let j = overfull.pop().unwrap();
             alias_table[i] = j;
             probability_table[j] += probability_table[i] - 1.0;
             if probability_table[j] < 1.0 { underfull.push(j) } else { overfull.push(j) };
-        };
-        for i in underfull.iter().chain(overfull.iter()) {
-            alias_table[*i] = 1;
         };
 
         AliasDistribution {
