@@ -55,7 +55,7 @@ impl PassphraseMarkovChain {
         for (ngram, transition_counts) in transition_map.into_iter() {
             let node = MarkovNode::new(ngram.clone(), transition_counts);
             total_entropy += node.entropy();
-            nodes.insert(ngram.clone(), node);
+            nodes.insert(ngram, node);
         };
         let starting_dist = AliasDistribution::new(starting_counts);
 
