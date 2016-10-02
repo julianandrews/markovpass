@@ -2,24 +2,25 @@ mod alias_dist;
 
 use alias_dist::AliasDistribution;
 use std::collections::HashMap;
-use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct MarkovNode<T: Hash + Eq> {
+pub struct MarkovNode<T> {
     pub value: T,
-    dist: AliasDistribution<T>,
+    transitions: Vec<T>,
+    dist: AliasDistribution,
 }
 
-impl<T: Hash + Eq> MarkovNode<T> {
-    pub fn new(value: T, counts: HashMap<T, usize>) -> MarkovNode<T> {
+impl<T> MarkovNode<T> {
+    pub fn new(value: T, values: Vec<T>, weights: Vec<f64>) -> MarkovNode<T> {
         MarkovNode {
             value: value,
-            dist: AliasDistribution::new(counts),
+            transitions: values,
+            dist: AliasDistribution::new(weights),
         }
     }
 
     pub fn next(&self) -> &T {
-        self.dist.choice().unwrap()
+        &self.transitions[self.dist.choice().unwrap()]
     }
 
     pub fn entropy(&self) -> f64 {
@@ -30,7 +31,8 @@ impl<T: Hash + Eq> MarkovNode<T> {
 #[derive(Debug)]
 pub struct PassphraseMarkovChain {
     nodes: HashMap<String, MarkovNode<String>>,
-    starting_dist: AliasDistribution<String>,
+    starting_nodes: Vec<String>,
+    starting_dist: AliasDistribution,
 }
 
 impl PassphraseMarkovChain {
@@ -53,11 +55,28 @@ impl PassphraseMarkovChain {
         let mut total_entropy: f64 = 0.0;
         let mut nodes = HashMap::new();
         for (ngram, transition_counts) in transition_map.into_iter() {
-            let node = MarkovNode::new(ngram.clone(), transition_counts);
+
+            // FIXME: Temporary
+            let mut values = Vec::with_capacity(transition_counts.len());
+            let mut weights = Vec::with_capacity(transition_counts.len());
+            for (value, weight) in transition_counts.into_iter() {
+                values.push(value.clone());
+                weights.push(weight as f64);
+            }
+
+            let node = MarkovNode::new(ngram.clone(), values, weights);
             total_entropy += node.entropy();
             nodes.insert(ngram, node);
         };
-        let starting_dist = AliasDistribution::new(starting_counts);
+
+        // FIXME: Temporary
+        let mut starting_nodes = Vec::with_capacity(starting_counts.len());
+        let mut weights = Vec::with_capacity(starting_counts.len());
+        for (value, weight) in starting_counts.into_iter() {
+            starting_nodes.push(value);
+            weights.push(weight as f64);
+        }
+        let starting_dist = AliasDistribution::new(weights);
 
         if total_entropy == 0.0 {
             return Err("No entropy found in input.");
@@ -67,12 +86,13 @@ impl PassphraseMarkovChain {
 
         Ok(PassphraseMarkovChain {
             nodes: nodes,
+            starting_nodes: starting_nodes,
             starting_dist: starting_dist,
         })
     }
 
     pub fn get_node(&self) -> &MarkovNode<String> {
-        self.nodes.get(self.starting_dist.choice().unwrap()).unwrap()
+        self.nodes.get(&self.starting_nodes[self.starting_dist.choice().unwrap()]).unwrap()
     }
 
     pub fn passphrase(&self, min_entropy: f64) -> (String, f64) {
@@ -83,7 +103,8 @@ impl PassphraseMarkovChain {
             nodes.push(node);
             entropy += node.entropy();
             if entropy >= min_entropy && node.value.ends_with(" ") { break };
-            node = self.nodes.get(node.next()).unwrap();
+            let ngram = node.next();
+            node = self.nodes.get(ngram).unwrap();
         }
         let tail = nodes.last().unwrap().value.chars().skip(1);
         let chars = nodes.iter().map(|n| n.value.chars().next().unwrap()).chain(tail);

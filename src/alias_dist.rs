@@ -1,29 +1,24 @@
 extern crate rand;
 
 use self::rand::Rng;
-use std::collections::HashMap;
-use std::hash::Hash;
 
 #[derive(Debug)]
-pub struct AliasDistribution<T: Hash + Eq> {
-    values: Vec<T>,
+pub struct AliasDistribution {
     probability_table: Vec<f64>,
     alias_table: Vec<usize>,
     pub entropy: f64,
 }
 
-impl<T: Hash + Eq> AliasDistribution<T> {
-    pub fn new(weights: HashMap<T, usize>) -> AliasDistribution<T> {
+impl AliasDistribution {
+    pub fn new(weights: Vec<f64>) -> AliasDistribution {
         let size = weights.len();
-        let total = weights.values().fold(0, |sum, x| sum + x) as f64;
+        let total = weights.iter().fold(0.0, |sum, x| sum + x);
         let mut entropy = 0.0;
 
-        let mut values = Vec::with_capacity(size);
         let mut probability_table = Vec::with_capacity(size);
-        for (value, weight) in weights.into_iter() {
-            let prob = (weight as f64) / total;
+        for weight in weights.into_iter() {
+            let prob = weight / total;
             entropy -= prob * prob.log(2.0);
-            values.push(value);
             probability_table.push(prob * (size as f64));
         };
 
@@ -43,20 +38,19 @@ impl<T: Hash + Eq> AliasDistribution<T> {
         };
 
         AliasDistribution {
-            values: values,
             probability_table: probability_table,
             alias_table: alias_table,
             entropy: entropy,
         }
     }
 
-    pub fn choice(&self) -> Option<&T> {
-        if self.values.len() == 0 { return None; };
+    pub fn choice(&self) -> Option<usize> {
+        if self.probability_table.is_empty() { return None; };
         let mut rng = rand::OsRng::new().unwrap();
-        let i = rng.gen_range(0, self.values.len());
+        let i = rng.gen_range(0, self.probability_table.len());
         let y = rng.gen();
         let choice = if self.probability_table[i] >= y { i } else { self.alias_table[i] };
 
-        Some(&self.values[choice])
+        Some(choice)
     }
 }
