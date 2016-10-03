@@ -15,12 +15,12 @@ impl<T> MarkovNode<T> {
         MarkovNode {
             value: value,
             transitions: values,
-            dist: AliasDistribution::new(weights),
+            dist: AliasDistribution::new(weights).unwrap(),
         }
     }
 
     pub fn next(&self) -> &T {
-        &self.transitions[self.dist.choice().unwrap()]
+        &self.transitions[self.dist.choice()]
     }
 
     pub fn entropy(&self) -> f64 {
@@ -78,7 +78,7 @@ impl PassphraseMarkovChain {
             starting_ngrams.push(value);
             weights.push(weight as f64);
         }
-        let starting_dist = AliasDistribution::new(weights);
+        let starting_dist = AliasDistribution::new(weights).unwrap();
 
         if total_entropy == 0.0 {
             return Err("No entropy found in input.");
@@ -94,7 +94,7 @@ impl PassphraseMarkovChain {
     }
 
     pub fn get_node(&self) -> &MarkovNode<String> {
-        self.nodes.get(&self.starting_ngrams[self.starting_dist.choice().unwrap()]).unwrap()
+        self.nodes.get(&self.starting_ngrams[self.starting_dist.choice()]).unwrap()
     }
 
     pub fn passphrase(&self, min_entropy: f64) -> (String, f64) {
