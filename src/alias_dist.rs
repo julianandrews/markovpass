@@ -23,8 +23,8 @@ impl AliasDistribution {
         };
 
         let mut alias_table: Vec<usize> = (0..size).collect();
-        let mut overfull: Vec<usize> = Vec::with_capacity(size);
-        let mut underfull: Vec<usize> = Vec::with_capacity(size);
+        let mut overfull: Vec<usize> = Vec::new();
+        let mut underfull: Vec<usize> = Vec::new();
         for (i, prob) in probability_table.iter().enumerate() {
             if *prob < 1.0 { underfull.push(i); } else { overfull.push(i); }
         };

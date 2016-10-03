@@ -31,18 +31,19 @@ impl<T> MarkovNode<T> {
 #[derive(Debug)]
 pub struct PassphraseMarkovChain {
     nodes: HashMap<String, MarkovNode<String>>,
-    starting_nodes: Vec<String>,
+    starting_ngrams: Vec<String>,
     starting_dist: AliasDistribution,
 }
 
 impl PassphraseMarkovChain {
     pub fn new<U: Iterator<Item=String> + Clone>(ngrams: U)
             -> Result<PassphraseMarkovChain, &'static str> {
+
         let mut transition_map = HashMap::new();
         let mut starting_counts = HashMap::new();
         let mut ngrams_copy = ngrams.clone().cycle();
         ngrams_copy.next();
-        for (a, b) in ngrams.zip(ngrams_copy) {
+        for (a, b) in ngrams.zip(ngrams_copy).into_iter() {
             if b.starts_with(" ") {
                 let count = starting_counts.entry(b.clone()).or_insert(0);
                 *count += 1
@@ -52,11 +53,9 @@ impl PassphraseMarkovChain {
             *count += 1;
         };
 
-        let mut total_entropy: f64 = 0.0;
         let mut nodes = HashMap::new();
+        let mut total_entropy: f64 = 0.0;
         for (ngram, transition_counts) in transition_map.into_iter() {
-
-            // FIXME: Temporary
             let mut values = Vec::with_capacity(transition_counts.len());
             let mut weights = Vec::with_capacity(transition_counts.len());
             for (value, weight) in transition_counts.into_iter() {
@@ -69,11 +68,10 @@ impl PassphraseMarkovChain {
             nodes.insert(ngram, node);
         };
 
-        // FIXME: Temporary
-        let mut starting_nodes = Vec::with_capacity(starting_counts.len());
+        let mut starting_ngrams = Vec::with_capacity(starting_counts.len());
         let mut weights = Vec::with_capacity(starting_counts.len());
         for (value, weight) in starting_counts.into_iter() {
-            starting_nodes.push(value);
+            starting_ngrams.push(value);
             weights.push(weight as f64);
         }
         let starting_dist = AliasDistribution::new(weights);
@@ -86,13 +84,13 @@ impl PassphraseMarkovChain {
 
         Ok(PassphraseMarkovChain {
             nodes: nodes,
-            starting_nodes: starting_nodes,
+            starting_ngrams: starting_ngrams,
             starting_dist: starting_dist,
         })
     }
 
     pub fn get_node(&self) -> &MarkovNode<String> {
-        self.nodes.get(&self.starting_nodes[self.starting_dist.choice().unwrap()]).unwrap()
+        self.nodes.get(&self.starting_ngrams[self.starting_dist.choice().unwrap()]).unwrap()
     }
 
     pub fn passphrase(&self, min_entropy: f64) -> (String, f64) {
