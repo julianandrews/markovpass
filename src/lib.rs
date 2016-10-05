@@ -38,13 +38,14 @@ pub struct PassphraseMarkovChain {
 impl PassphraseMarkovChain {
     pub fn new<U: Iterator<Item=String> + Clone>(ngrams: U)
             -> Result<PassphraseMarkovChain, &'static str> {
-
         // Count transitions and viable starting ngrams.
         // To get natural sounding words, only start with ngrams at the start of words.
         let mut transition_counters: HashMap<String, HashMap<String, usize>> = HashMap::new();
         let mut starting_ngram_counts: HashMap<String, usize> = HashMap::new();
         let mut ngrams_copy = ngrams.clone().cycle();
-        ngrams_copy.next();
+        if ngrams_copy.next().is_none() {
+            return Err("No NGrams found.");
+        }
         for (a, b) in ngrams.zip(ngrams_copy).into_iter() {
             if b.starts_with(" ") {
                 let count = starting_ngram_counts.entry(b.clone()).or_insert(0);
