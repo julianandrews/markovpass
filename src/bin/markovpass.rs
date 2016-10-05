@@ -143,3 +143,76 @@ fn main() {
         println!("{} <{}>", passphrase, entropy);
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{clean_word,get_ngrams,gen_passphrases};
+
+    #[test]
+    fn test_clean_word() {
+        assert_eq!(clean_word("Test", 3), Some("Test"));
+        assert_eq!(clean_word("12'3test@314", 3), Some("test"));
+        assert_eq!(clean_word("31ld;Test", 3), None);
+        assert_eq!(clean_word("a", 2), None);
+        assert_eq!(clean_word("Test", 5), None);
+    }
+
+    #[test]
+    fn test_get_ngrams() {
+        assert_eq!(
+            get_ngrams("this is a test", 3, 3),
+            vec! [" th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"]
+        );
+        assert_eq!(
+            get_ngrams("this is a test", 5, 3),
+            vec! [" this", "this ", "his t", "is te", "s tes", " test",
+                  "test ", "est t", "st th", "t thi"]
+        );
+        assert_eq!(
+            get_ngrams("this is a test", 3, 2),
+            vec! [" th", "thi", "his", "is ", "s i", " is", "is ", "s t",
+                  " te", "tes", "est", "st ", "t t"]
+        );
+        assert!(get_ngrams("this is a test", 3, 5).is_empty(), "Ngrams not empty");
+        assert_eq!(
+            get_ngrams("Some frick'in test", 6, 3),
+            vec! [" some ", "some t", "ome te", "me tes", "e test", " test ",
+                  "test s", "est so", "st som", "t some"]
+        );
+    }
+
+    #[test]
+    fn test_gen_passphrases() {
+        let ngrams = get_ngrams("tic toc", 3, 3);
+        let min_entropy = 60.0;
+        let result = gen_passphrases(ngrams, 5, min_entropy);
+        assert!(result.is_ok(), "Passphrase generation failed.");
+        let passphrases = result.unwrap();
+        assert_eq!(passphrases.len(), 5);
+        for (p, e) in passphrases {
+            assert_eq!(e, 60.0);
+            assert_eq!(p.len(), 239);
+        }
+    }
+
+    #[test]
+    fn test_gen_passphrases_no_ngrams() {
+        let ngrams: Vec<String> = vec![];
+        let result = gen_passphrases(ngrams, 1, 60.0);
+        assert!(result.is_err(), "No error despite no ngrams.");
+    }
+
+    #[test]
+    fn test_gen_passphrases_no_entropy() {
+        let ngrams = get_ngrams("abc def ghijkl mnopqr stuvw xyz", 2, 1);
+        let result = gen_passphrases(ngrams, 1, 60.0);
+        assert!(result.is_err(), "No error despite no entropy.");
+    }
+
+    #[test]
+    fn test_gen_passphrases_no_starting_entropy() {
+        let ngrams = get_ngrams("tictoctictactoe", 2, 1);
+        let result = gen_passphrases(ngrams, 1, 60.0);
+        assert!(result.is_err(), "No error despite no starting entropy.");
+    }
+}
