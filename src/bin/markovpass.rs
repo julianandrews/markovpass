@@ -74,11 +74,10 @@ fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<
     let words = corpus.split_whitespace()
       .filter_map(|word| clean_word(word, min_word_length));
     let cleaned_corpus = Some("").into_iter().chain(words).collect::<Vec<&str>>().join(" ");
-    let char_count = cleaned_corpus.chars().count();
-    if char_count < ngram_length { return vec![]; };
-    let count = char_count - ngram_length + 1;
+    let count = cleaned_corpus.chars().count();
+    if count < ngram_length { return vec![]; };
 
-    let mut chars = cleaned_corpus.chars();
+    let mut chars = cleaned_corpus.chars().cycle();
     let mut ngrams = Vec::with_capacity(count);
     for _ in 0..count {
         let ngram: String = chars.clone().take(ngram_length).collect();
