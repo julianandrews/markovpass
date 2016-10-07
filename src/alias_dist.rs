@@ -1,18 +1,41 @@
 extern crate rand;
 
+use std;
 use self::rand::Rng;
+
+#[derive(Debug, PartialEq)]
+pub enum AliasDistributionError {
+    InvalidWeights,
+    NullDistribution,
+}
+
+impl std::fmt::Display for AliasDistributionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match * self {
+            AliasDistributionError::InvalidWeights => write!(f, "InvalidWeights"),
+            AliasDistributionError::NullDistribution => write!(f, "NullDistribution"),
+        }
+    }
+}
+
+impl std::error::Error for AliasDistributionError {
+    fn description(&self) -> &str {
+        match *self {
+            AliasDistributionError::InvalidWeights => "Negative weights are not allowed",
+            AliasDistributionError::NullDistribution => "Sum of weights must not be zero",
+        }
+    }
+
+    fn cause(&self) -> Option<&std::error::Error> {
+        None
+    }
+}
 
 #[derive(Debug)]
 pub struct AliasDistribution {
     probability_table: Vec<f64>,
     alias_table: Vec<usize>,
     pub entropy: f64,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum AliasDistributionError {
-    InvalidWeights,
-    NullDistribution,
 }
 
 impl AliasDistribution {
