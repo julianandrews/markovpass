@@ -1,6 +1,5 @@
 extern crate rand;
 
-use std;
 use self::rand::Rng;
 
 #[derive(Debug, PartialEq)]
@@ -9,8 +8,8 @@ pub enum AliasDistributionError {
     NullDistribution,
 }
 
-impl std::fmt::Display for AliasDistributionError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl ::std::fmt::Display for AliasDistributionError {
+    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
         match * self {
             AliasDistributionError::InvalidWeights => write!(f, "InvalidWeights"),
             AliasDistributionError::NullDistribution => write!(f, "NullDistribution"),
@@ -18,7 +17,7 @@ impl std::fmt::Display for AliasDistributionError {
     }
 }
 
-impl std::error::Error for AliasDistributionError {
+impl ::std::error::Error for AliasDistributionError {
     fn description(&self) -> &str {
         match *self {
             AliasDistributionError::InvalidWeights => "Negative weights are not allowed",
@@ -26,7 +25,7 @@ impl std::error::Error for AliasDistributionError {
         }
     }
 
-    fn cause(&self) -> Option<&std::error::Error> {
+    fn cause(&self) -> Option<&::std::error::Error> {
         None
     }
 }
