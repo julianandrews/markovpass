@@ -71,6 +71,7 @@ fn clean_word(word: &str, min_length: usize) -> Option<&str> {
 }
 
 fn get_ngrams(corpus: String, ngram_length: usize, min_word_length: usize) -> Vec<String> {
+    let corpus = corpus.to_lowercase();
     let words = corpus.split_whitespace()
       .filter_map(|word| clean_word(word, min_word_length));
     let cleaned_corpus = Some("").into_iter().chain(words).collect::<Vec<&str>>().join(" ");
@@ -81,7 +82,7 @@ fn get_ngrams(corpus: String, ngram_length: usize, min_word_length: usize) -> Ve
     let mut ngrams = Vec::with_capacity(count);
     for _ in 0..count {
         let ngram: String = chars.clone().take(ngram_length).collect();
-        ngrams.push(ngram.to_lowercase());
+        ngrams.push(ngram);
         chars.next();
     };
 
