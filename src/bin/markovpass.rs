@@ -10,7 +10,7 @@ fn build_opts() -> getopts::Options {
     opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
     opts.optopt("l", "", "NGram length (default 3, must be > 1)", "LENGTH");
     opts.optopt("w", "", "Minimum word length for corpus (default 5)", "LENGTH");
-    opts.optflag("h", "help", "display this help and exit");
+    opts.optflag("h", "help", "Display this help and exit");
 
     opts
 }

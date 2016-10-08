@@ -29,7 +29,7 @@ Usage
       -e MINENTROPY       Minimum entropy (default 60)
       -l LENGTH           NGram length (default 3)
       -w LENGTH           Minimum word length for corpus (default 5)
-      -h, --help          display this help and exit
+      -h, --help          Display this help and exit
 
 ``markovpass`` requires a corpus to work with. The corpus can either be
 provided via the ``FILE`` argument or via STDIN. It can take pretty much any
