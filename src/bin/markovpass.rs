@@ -70,7 +70,7 @@ fn clean_word(word: &str, min_length: usize) -> Option<&str> {
     }
 }
 
-fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<String> {
+fn get_ngrams(corpus: String, ngram_length: usize, min_word_length: usize) -> Vec<String> {
     let words = corpus.split_whitespace()
       .filter_map(|word| clean_word(word, min_word_length));
     let cleaned_corpus = Some("").into_iter().chain(words).collect::<Vec<&str>>().join(" ");
@@ -129,7 +129,7 @@ fn main() {
             return;
         },
     };
-    let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
+    let ngrams = get_ngrams(corpus, ngram_length, min_word_length);
     let passphrases = match gen_passphrases(ngrams, number, min_entropy) {
         Ok(passphrases) => { passphrases },
         Err(e) => {
