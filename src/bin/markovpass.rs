@@ -60,10 +60,14 @@ fn get_corpus(filename: Option<&str>) -> Result<String, std::io::Error> {
     Ok(corpus)
 }
 
-fn clean_word(word: &str, min_length: usize) -> Option<&str> {
-    let word = word.trim_matches(|c: char| !c.is_alphabetic());
+fn is_word_char(c: char) -> bool {
+    c.is_alphabetic() || c == '\''
+}
 
-    if word.chars().all(|c: char| c.is_alphabetic()) && word.len() >= min_length {
+fn clean_word(word: &str, min_length: usize) -> Option<&str> {
+    let word = word.trim_matches(|c| ! is_word_char(c));
+
+    if word.chars().all(is_word_char) && word.len() >= min_length {
         Some(word)
     } else {
         None
@@ -151,7 +155,8 @@ mod tests {
     #[test]
     fn test_clean_word() {
         assert_eq!(clean_word("Test", 3), Some("Test"));
-        assert_eq!(clean_word("12'3test@314", 3), Some("test"));
+        assert_eq!(clean_word("123test@314", 3), Some("test"));
+        assert_eq!(clean_word("2#@test'in23", 3), Some("test'in"));
         assert_eq!(clean_word("31ld;Test", 3), None);
         assert_eq!(clean_word("a", 2), None);
         assert_eq!(clean_word("Test", 5), None);
@@ -178,6 +183,10 @@ mod tests {
             get_ngrams("Some awes0me test".to_string(), 6, 3),
             vec! [" some ", "some t", "ome te", "me tes", "e test", " test ",
                   "test s", "est so", "st som", "t some"]
+        );
+        assert_eq!(
+            get_ngrams("test'in".to_string(), 3, 3),
+            vec! [" te", "tes", "est", "st'", "t'i", "'in", "in ", "n t"]
         );
     }
 
