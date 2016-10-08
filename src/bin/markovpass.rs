@@ -160,22 +160,22 @@ mod tests {
     #[test]
     fn test_get_ngrams() {
         assert_eq!(
-            get_ngrams("this is a test", 3, 3),
+            get_ngrams("this is a test".to_string(), 3, 3),
             vec! [" th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"]
         );
         assert_eq!(
-            get_ngrams("this is a test", 5, 3),
+            get_ngrams("this is a test".to_string(), 5, 3),
             vec! [" this", "this ", "his t", "is te", "s tes", " test",
                   "test ", "est t", "st th", "t thi"]
         );
         assert_eq!(
-            get_ngrams("this is a test", 3, 2),
+            get_ngrams("this is a test".to_string(), 3, 2),
             vec! [" th", "thi", "his", "is ", "s i", " is", "is ", "s t",
                   " te", "tes", "est", "st ", "t t"]
         );
-        assert!(get_ngrams("this is a test", 3, 5).is_empty(), "Ngrams not empty");
+        assert!(get_ngrams("this is a test".to_string(), 3, 5).is_empty(), "Ngrams not empty");
         assert_eq!(
-            get_ngrams("Some frick'in test", 6, 3),
+            get_ngrams("Some awes0me test".to_string(), 6, 3),
             vec! [" some ", "some t", "ome te", "me tes", "e test", " test ",
                   "test s", "est so", "st som", "t some"]
         );
@@ -183,7 +183,7 @@ mod tests {
 
     #[test]
     fn test_gen_passphrases() {
-        let ngrams = get_ngrams("tic toc", 3, 3);
+        let ngrams = get_ngrams("tic toc".to_string(), 3, 3);
         let min_entropy = 60.0;
         let result = gen_passphrases(ngrams, 5, min_entropy);
         assert!(result.is_ok(), "Passphrase generation failed.");
@@ -200,14 +200,14 @@ mod tests {
 
     #[test]
     fn test_gen_passphrases_no_entropy() {
-        let ngrams = get_ngrams("abc def ghijkl mnopqr stuvw xyz", 2, 1);
+        let ngrams = get_ngrams("abc def ghijkl mnopqr stuvw xyz".to_string(), 2, 1);
         let result = gen_passphrases(ngrams, 1, 60.0);
         assert!(result.is_err(), "No error despite no entropy.");
     }
 
     #[test]
     fn test_gen_passphrases_no_starting_entropy() {
-        let ngrams = get_ngrams("tictoctictactoe", 2, 1);
+        let ngrams = get_ngrams("tictoctictactoe".to_string(), 2, 1);
         let result = gen_passphrases(ngrams, 1, 60.0);
         assert!(result.is_err(), "No error despite no starting entropy.");
     }
