@@ -1,7 +1,8 @@
 extern crate getopts;
 extern crate markovpass;
 
-use markovpass::{PassphraseMarkovChain,PassphraseMarkovChainError};
+use markovpass::*;
+use std::error::Error;
 use std::io::Write;
 
 fn build_opts() -> getopts::Options {
@@ -138,7 +139,7 @@ fn main() {
     let passphrases = match gen_passphrases(ngrams, number, min_entropy) {
         Ok(passphrases) => { passphrases },
         Err(e) => {
-            write_error(&format!("{}: {}", &program, e));
+            write_error(&format!("{}: {}", &program, e.description()));
             return;
         },
     };
