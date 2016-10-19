@@ -17,6 +17,13 @@ or::
 
     facupid trible taxed partice
 
+Installation
+------------
+
+Assuming you have ``rustc`` and ``cargo`` installed, you should be able to
+build ``markovpass`` with ``cargo build --release``. ``markovpass`` is just a
+standalone binary, and you can put it wherever you like.
+
 Usage
 -----
 
@@ -31,19 +38,30 @@ Usage
       -w LENGTH           Minimum word length for corpus (default 5)
       -h, --help          Display this help and exit
 
-``markovpass`` requires a corpus to work with. The corpus can either be
-provided via the ``FILE`` argument or via STDIN. It can take pretty much any
-text input and will strip the input of any non-alphabetic characters (and
-discard words containing non-alphabetic characters, but keep words sandwiched
-by non-alphabetic characters). The larger and more varied the corpus the
-greater the entropy, but you'll hit diminishing returns fairly quickly. I
-recommend using `Project Guttenberg <https://www.gutenberg.org/>`_; personally
-I like a mix of H.P. Lovecraft and Jane Austen. The ``-w`` option can be used
-to remove short words from the corpus which will increase the average length of
-words in your passphrase, but not guarantee a minimum length (the minimum word
-length will be the lesser of the ``-w`` and ``-l`` options). Obviously
-increasing the minimum word length will lead to longer passphrases for the same
-entropy.
+``markovpass`` requires a corpus to work with. The corpus can be provided via
+the ``FILE`` argument. Alternatively, ``markovpass`` will look for data on
+``STDIN`` if no ``FILE`` argument is provided. It can take pretty much any text
+input and will strip the input of any non-alphabetic characters (and discard
+words containing non-alphabetic characters, but keep words sandwiched by
+non-alphabetic characters). The larger and more varied the corpus the greater
+the entropy, but you'll hit diminishing returns fairly quickly. I recommend
+using `Project Guttenberg <https://www.gutenberg.org/>`_; personally I like a
+mix of H.P. Lovecraft and Jane Austen. The ``-w`` option can be used to remove
+short words from the corpus which will increase the average length of words in
+your passphrase, but not guarantee a minimum length (the minimum word length
+will be the lesser of the ``-w`` and ``-l`` options). Obviously increasing the
+minimum word length will lead to longer passphrases for the same entropy.
+
+If you want a quick easy way to try it out (and you have ``curl`` installed)::
+
+    curl -s http://www.gutenberg.org/files/1342/1342.txt | markovpass
+
+should download "Pride and Predjudice" from Project Gutenberg and use it as
+your corpus. I keep a folder with a bunch of text files in it and use::
+
+    cat corpus/*.txt | markovpass -e 80
+
+to generate passphrases using a range of files and a high minimum entropy.
 
 Shannon Entropy and Guesswork
 -----------------------------
@@ -60,21 +78,22 @@ knows my method will guess 'aaaaa...' and get my passphrases right on the first
 guess 60.4% of the time. So you should treat Shannon entropy estimates with
 caution.
 
-That said, I suspect that for moderately long ``markovpass`` passphrases
-using a representative corpus of language, Shannon entropy is probably a good
-proxy for difficulty in guessing. The fundamental problem with average
-guesswork is that the distribution of passphrase probabilities isn't
-necessarily flat. If the distribution has a strong peak (or multiple peaks) and
-a long tail of lower probability passphrases then average guesswork is going to
-be a poor proxy for the strength of the passphrase generation method. In the
-case of ``markovpass``, if trained on a reasonably representative corpus of
-language, over a large enough series of decisions the probability distribution
-of passphrases should look more or less gaussian (Some variant of the `Central
-limit theorem <https://en.wikipedia.org/wiki/Central_limit_theorem>`_ for
-Markov Chains should apply). While a Gaussian distribution isn't a flat
-distribution, it's also a long ways from the pathological example above. The
-Shannon entropy given is definitely an overestimate of the difficulty in
-guessing, but probably not a terrible one.
+That said, I suspect that for moderately long ``markovpass`` passphrases using
+a representative corpus of language, Shannon entropy is probably a good proxy
+for difficulty in guessing. The fundamental problem with average guesswork is
+that the distribution of passphrase probabilities isn't necessarily flat. If
+the distribution has a strong peak (or multiple peaks) and a long tail of lower
+probability passphrases then average guesswork is going to be a poor proxy for
+the strength of the passphrase generation method. In the case of
+``markovpass``, if trained on a reasonably representative corpus of language,
+over a large enough series of decisions the probability distribution of
+passphrases should look more or less gaussian (some variant of the `Central
+limit theorem <https://en.wikipedia.org/wiki/Central_limit_theorem>`_ should
+apply). While a gaussian distribution isn't a flat distribution, it's also a
+long ways from the pathological example above. The Shannon entropy given is
+definitely an overestimate of the difficulty in guessing, but probably not a
+terrible one. Still, use ``markovpass`` at your own risk - I can make no
+guarantees!
 
 .. [1] J. L. Massey, “Guessing and entropy,” in Proc. IEEE Int. Symp.
   Information Theory, 1994, p. 204.
