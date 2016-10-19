@@ -83,13 +83,18 @@ fn get_ngrams(corpus: String, ngram_length: usize, min_word_length: usize) -> Ve
     let count = cleaned_corpus.chars().count();
     if count < ngram_length { return vec![]; };
 
-    let mut chars = cleaned_corpus.chars().cycle();
+    // let mut chars = cleaned_corpus.chars().cycle();
     let mut ngrams = Vec::with_capacity(count);
-    for _ in 0..count {
-        let ngram: String = chars.clone().take(ngram_length).collect();
-        ngrams.push(ngram);
-        chars.next();
-    };
+
+    let ngrams_it = ToNgrams::new(ngram_length, cleaned_corpus);
+    for ngram in ngrams_it {
+        ngrams.push(ngram.to_string());
+    }
+    // for _ in 0..count {
+    //     let ngram: String = chars.clone().take(ngram_length).collect();
+    //     ngrams.push(ngram);
+    //     chars.next();
+    // };
 
     ngrams
 }

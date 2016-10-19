@@ -2,6 +2,51 @@ mod alias_dist;
 
 use alias_dist::AliasDistribution;
 use std::collections::HashMap;
+use std::marker::PhantomData;
+
+#[derive(Debug)]
+pub struct ToNgrams<'a> {
+    string: String,
+    ngram_start: usize,
+    ngram_end: usize,
+    _marker: PhantomData<&'a String>,
+}
+
+impl<'a> Iterator for ToNgrams<'a> {
+    type Item = &'a str;
+    fn next(&mut self) -> Option<Self::Item> {
+        unsafe {
+            if let Some(next_end_char) = self.string[self.ngram_end..].chars().next() {
+                let ngram = self.string.slice_unchecked(self.ngram_start, self.ngram_end);
+                self.ngram_end += next_end_char.len_utf8();
+                let next_start_char = self.string[self.ngram_start..].chars().next().unwrap();
+                self.ngram_start += next_start_char.len_utf8();
+
+                Some(ngram)
+            } else {
+                None
+            }
+        }
+    }
+}
+
+impl<'a> ToNgrams<'a> {
+    pub fn new(ngram_length: usize, mut string: String) -> ToNgrams<'a> {
+        let extra_chars = if let Some(x) = string.char_indices().nth(ngram_length) {
+            string[0..x.0].to_owned()
+        } else {
+            " ".to_string()
+        };
+        let last_char_length = extra_chars.chars().next_back().unwrap().len_utf8();
+        string.push_str(&extra_chars);
+        ToNgrams {
+            string: string.to_string(),
+            ngram_start: 0,
+            ngram_end: extra_chars.len() - last_char_length,
+            _marker: PhantomData,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct MarkovNode<T> {
