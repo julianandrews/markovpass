@@ -2,48 +2,52 @@ mod alias_dist;
 
 use alias_dist::AliasDistribution;
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 #[derive(Debug)]
 pub struct ToNgrams<'a> {
-    string: String,
+    string: &'a str,
     ngram_start: usize,
     ngram_end: usize,
-    _marker: PhantomData<&'a String>,
 }
 
 impl<'a> Iterator for ToNgrams<'a> {
     type Item = &'a str;
-    fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            if let Some(next_end_char) = self.string[self.ngram_end..].chars().next() {
-                let ngram = self.string.slice_unchecked(self.ngram_start, self.ngram_end);
-                self.ngram_end += next_end_char.len_utf8();
-                let next_start_char = self.string[self.ngram_start..].chars().next().unwrap();
-                self.ngram_start += next_start_char.len_utf8();
+    fn next(&mut self) -> Option<&'a str> {
+        // check if ngram_start is past the end of the str, if so return None
+        // build the slice, wrapping if ngram_end < ngram_start
+        // increment ngram_start
+        // increment ngram_end, wrapping if necessary
 
-                Some(ngram)
-            } else {
-                None
-            }
-        }
+        // http://stackoverflow.com/questions/29670170/iterate-over-a-string-n-elements-at-a-time
+        // unsafe {
+        //     if let Some(next_end_char) = self.string[self.ngram_end..].chars().next() {
+        //         let ngram = self.string.slice_unchecked(self.ngram_start, self.ngram_end);
+        //         self.ngram_end += next_end_char.len_utf8();
+        //         let next_start_char = self.string[self.ngram_start..].chars().next().unwrap();
+        //         self.ngram_start += next_start_char.len_utf8();
+
+        //         Some(ngram)
+        //     } else {
+        //         None
+        //     }
+        // }
     }
 }
 
 impl<'a> ToNgrams<'a> {
-    pub fn new(ngram_length: usize, mut string: String) -> ToNgrams<'a> {
-        let extra_chars = if let Some(x) = string.char_indices().nth(ngram_length) {
-            string[0..x.0].to_owned()
-        } else {
-            " ".to_string()
-        };
-        let last_char_length = extra_chars.chars().next_back().unwrap().len_utf8();
-        string.push_str(&extra_chars);
+    pub fn new(ngram_length: usize, mut string: &'a str) -> ToNgrams<'a> {
+        // let extra_chars = if let Some(x) = string.char_indices().nth(ngram_length) {
+        //     string[0..x.0].to_owned()
+        // } else {
+        //     " ".to_string()
+        // };
+        // let last_char_length = extra_chars.chars().next_back().unwrap().len_utf8();
+        // string.push_str(&extra_chars);
+        let ngram_end = string.char_indices().nth(ngram_length - 1).unwrap().0; 
         ToNgrams {
-            string: string.to_string(),
+            string: string,
             ngram_start: 0,
-            ngram_end: extra_chars.len() - last_char_length,
-            _marker: PhantomData,
+            ngram_end: ngram_end,
         }
     }
 }
