@@ -38,7 +38,7 @@ pub enum PassphraseMarkovChainError {
 impl std::fmt::Display for PassphraseMarkovChainError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match * self {
-            PassphraseMarkovChainError::NoNgrams => write!(f, "NoNgrams`"),
+            PassphraseMarkovChainError::NoNgrams => write!(f, "NoNgrams"),
             PassphraseMarkovChainError::NoEntropy => write!(f, "NoEntropy"),
             PassphraseMarkovChainError::NoStartOfWordEntropy => write!(f, "NoStartOfWordEntropy"),
         }
