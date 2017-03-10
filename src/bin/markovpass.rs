@@ -1,5 +1,8 @@
+#![feature(test)]
+
 extern crate getopts;
 extern crate markovpass;
+extern crate test;
 
 use markovpass::*;
 use std::error::Error;
@@ -151,7 +154,9 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{clean_word,get_ngrams,gen_passphrases};
+    use std::path::PathBuf;
+    use super::{clean_word,get_corpus,get_ngrams,gen_passphrases};
+    use test::Bencher;
 
     #[test]
     fn test_clean_word() {
@@ -220,5 +225,13 @@ mod tests {
         let ngrams = get_ngrams("tictoctictactoe".to_string(), 2, 1);
         let result = gen_passphrases(ngrams, 1, 60.0);
         assert!(result.is_err(), "No error despite no starting entropy.");
+    }
+
+    #[bench]
+    fn bench_get_ngrams(b: &mut Bencher) {
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.push("testdata/Jane Austen - Pride and Prejudice.txt");
+        let corpus = get_corpus(p.to_str()).unwrap();
+        b.iter(|| get_ngrams(corpus.clone(), 3, 5));
     }
 }
