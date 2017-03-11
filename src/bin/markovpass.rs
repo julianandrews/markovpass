@@ -234,4 +234,13 @@ mod tests {
         let corpus = get_corpus(p.to_str()).unwrap();
         b.iter(|| get_ngrams(corpus.clone(), 3, 5));
     }
+
+    #[bench]
+    fn bench_gen_passphrases(b: &mut Bencher) {
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.push("testdata/Jane Austen - Pride and Prejudice.txt");
+        let corpus = get_corpus(p.to_str()).unwrap();
+        let ngrams = get_ngrams(corpus, 3, 5);
+        b.iter(|| gen_passphrases(ngrams.clone(), 1, 80.0));
+    }
 }
