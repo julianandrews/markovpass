@@ -47,7 +47,7 @@ impl std::fmt::Display for PassphraseMarkovChainError {
 
 impl std::error::Error for PassphraseMarkovChainError {
     fn description(&self) -> &str {
-        match *self {
+        match * self {
             PassphraseMarkovChainError::NoNgrams => "No ngrams found in input",
             PassphraseMarkovChainError::NoEntropy => "Input has no entropy",
             PassphraseMarkovChainError::NoStartOfWordEntropy =>
@@ -68,24 +68,27 @@ pub struct PassphraseMarkovChain {
 }
 
 impl PassphraseMarkovChain {
-    pub fn new<U: Iterator<Item=String> + Clone>(ngrams: U)
+    pub fn new<U: Iterator<Item=String>>(mut ngrams: U)
             -> Result<PassphraseMarkovChain, PassphraseMarkovChainError> {
         // Count transitions and viable starting ngrams.
         // To get natural sounding words, only start with ngrams at the start of words.
         let mut transition_counters: HashMap<String, HashMap<String, usize>> = HashMap::new();
         let mut starting_ngram_counts: HashMap<String, usize> = HashMap::new();
-        let mut ngrams_copy = ngrams.clone().cycle();
-        if ngrams_copy.next().is_none() {
+
+        let first = ngrams.next();
+        if first.is_none() {
             return Err(PassphraseMarkovChainError::NoNgrams);
         }
-        for (a, b) in ngrams.zip(ngrams_copy).into_iter() {
+        let mut a = first.unwrap();
+        for b in ngrams.chain(Some(a.clone()).into_iter()) {
+            let transitions = transition_counters.entry(a).or_insert(HashMap::new());
+            let count = transitions.entry(b.clone()).or_insert(0);
+            *count += 1;
             if b.starts_with(" ") {
                 let count = starting_ngram_counts.entry(b.clone()).or_insert(0);
                 *count += 1
             }
-            let transitions = transition_counters.entry(a).or_insert(HashMap::new());
-            let count = transitions.entry(b).or_insert(0);
-            *count += 1;
+            a = b;
         };
 
         // Build all the MarkovNodes from the tranition counts.

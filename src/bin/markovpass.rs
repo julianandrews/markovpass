@@ -78,28 +78,26 @@ fn clean_word(word: &str, min_length: usize) -> Option<&str> {
     }
 }
 
-fn get_ngrams(corpus: String, ngram_length: usize, min_word_length: usize) -> Vec<String> {
+fn get_ngrams(corpus: String, ngram_length: usize, min_word_length: usize) -> std::vec::IntoIter<String> {
     let corpus = corpus.to_lowercase();
     let words = corpus.split_whitespace()
       .filter_map(|word| clean_word(word, min_word_length));
     let cleaned_corpus = Some("").into_iter().chain(words).collect::<Vec<&str>>().join(" ");
     let count = cleaned_corpus.chars().count();
-    if count < ngram_length { return vec![]; };
-
-    let mut chars = cleaned_corpus.chars().cycle();
     let mut ngrams = Vec::with_capacity(count);
+    let mut chars = cleaned_corpus.chars().cycle();
     for _ in 0..count {
         let ngram: String = chars.clone().take(ngram_length).collect();
         ngrams.push(ngram);
         chars.next();
     };
 
-    ngrams
+    ngrams.into_iter()
 }
 
-fn gen_passphrases(ngrams: Vec<String>, number: usize, min_entropy: f64)
+fn gen_passphrases<U: Iterator<Item=String>>(ngrams: U, number: usize, min_entropy: f64)
         -> Result<Vec<(String, f64)>, PassphraseMarkovChainError> {
-    let chain = try!(PassphraseMarkovChain::new(ngrams.iter().cloned()));
+    let chain = try!(PassphraseMarkovChain::new(ngrams));
     let mut passphrases = Vec::with_capacity(number);
     for _ in 0..number {
         passphrases.push(chain.passphrase(min_entropy));
@@ -171,27 +169,27 @@ mod tests {
     #[test]
     fn test_get_ngrams() {
         assert_eq!(
-            get_ngrams("this is a test".to_string(), 3, 3),
+            get_ngrams("this is a test".to_string(), 3, 3).collect::<Vec<String>>(),
             vec! [" th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"]
         );
         assert_eq!(
-            get_ngrams("this is a test".to_string(), 5, 3),
+            get_ngrams("this is a test".to_string(), 5, 3).collect::<Vec<String>>(),
             vec! [" this", "this ", "his t", "is te", "s tes", " test",
                   "test ", "est t", "st th", "t thi"]
         );
         assert_eq!(
-            get_ngrams("this is a test".to_string(), 3, 2),
+            get_ngrams("this is a test".to_string(), 3, 2).collect::<Vec<String>>(),
             vec! [" th", "thi", "his", "is ", "s i", " is", "is ", "s t",
                   " te", "tes", "est", "st ", "t t"]
         );
-        assert!(get_ngrams("this is a test".to_string(), 3, 5).is_empty(), "Ngrams not empty");
+        assert_eq!(get_ngrams("this is a test".to_string(), 3, 5).next(), None);
         assert_eq!(
-            get_ngrams("Some awes0me test".to_string(), 6, 3),
+            get_ngrams("Some awes0me test".to_string(), 6, 3).collect::<Vec<String>>(),
             vec! [" some ", "some t", "ome te", "me tes", "e test", " test ",
                   "test s", "est so", "st som", "t some"]
         );
         assert_eq!(
-            get_ngrams("test'in".to_string(), 3, 3),
+            get_ngrams("test'in".to_string(), 3, 3).collect::<Vec<String>>(),
             vec! [" te", "tes", "est", "st'", "t'i", "'in", "in ", "n t"]
         );
     }
@@ -209,7 +207,7 @@ mod tests {
     #[test]
     fn test_gen_passphrases_no_ngrams() {
         let ngrams: Vec<String> = vec![];
-        let result = gen_passphrases(ngrams, 1, 60.0);
+        let result = gen_passphrases(ngrams.into_iter(), 1, 60.0);
         assert!(result.is_err(), "No error despite no ngrams.");
     }
 

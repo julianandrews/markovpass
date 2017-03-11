@@ -19,7 +19,7 @@ impl ::std::fmt::Display for AliasDistributionError {
 
 impl ::std::error::Error for AliasDistributionError {
     fn description(&self) -> &str {
-        match *self {
+        match * self {
             AliasDistributionError::InvalidWeights => "Negative weights are not allowed",
             AliasDistributionError::NullDistribution => "Sum of weights must not be zero",
         }
