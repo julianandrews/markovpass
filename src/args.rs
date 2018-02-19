@@ -1,9 +1,9 @@
 extern crate getopts;
 
-pub use self::getopts::Options;
+use std::path::PathBuf;
 
-pub fn build_opts() -> Options {
-    let mut opts = Options::new();
+pub fn build_opts() -> getopts::Options {
+    let mut opts = getopts::Options::new();
     opts.optopt(
         "n",
         "",
@@ -23,22 +23,10 @@ pub fn build_opts() -> Options {
     opts
 }
 
-fn parse_flag<T: ::std::str::FromStr>(
-    matches: &getopts::Matches,
-    flag: &str,
-    default: T,
-) -> Result<T, &'static str> {
-    matches
-        .opt_str(flag)
-        .map(|c| c.parse::<T>())
-        .unwrap_or(Ok(default))
-        .map_err(|_| "Failed to parse flag.")
-}
-
 pub fn parse_args(
-    opts: &Options,
+    opts: &getopts::Options,
     args: &Vec<String>,
-) -> Result<(Option<String>, usize, f64, usize, usize), &'static str> {
+) -> Result<(Option<PathBuf>, usize, f64, usize, usize), &'static str> {
     let matches = try!(
         opts.parse(&args[1..])
             .map_err(|_| "Failed to parse arguments.")
@@ -60,8 +48,25 @@ pub fn parse_args(
     let filename = if matches.free.is_empty() || matches.free[0] == "-" {
         None
     } else {
-        Some(matches.free[0].clone())
+        Some(PathBuf::from(matches.free[0].clone()))
     };
 
     Ok((filename, number, min_entropy, ngram_length, min_word_length))
+}
+
+pub fn print_usage(program: &str, opts: &getopts::Options) {
+    let brief = format!("Usage: {} [FILE] [options]", program);
+    print!("{}", opts.usage(&brief));
+}
+
+fn parse_flag<T: ::std::str::FromStr>(
+    matches: &getopts::Matches,
+    flag: &str,
+    default: T,
+) -> Result<T, &'static str> {
+    matches
+        .opt_str(flag)
+        .map(|c| c.parse::<T>())
+        .unwrap_or(Ok(default))
+        .map_err(|_| "Failed to parse flag.")
 }

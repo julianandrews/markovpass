@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use lib::alias_dist::AliasDistribution;
-use lib::errors::MarkovpassError;
+use lib::error::MarkovpassError;
 
 #[derive(Debug)]
 pub struct MarkovNode<T> {
