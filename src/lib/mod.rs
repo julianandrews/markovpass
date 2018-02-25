@@ -27,11 +27,7 @@ pub fn gen_passphrases(
     Ok(passphrases)
 }
 
-fn get_ngrams(
-    corpus: &str,
-    ngram_length: usize,
-    min_word_length: usize,
-) -> std::vec::IntoIter<String> {
+fn get_ngrams(corpus: &str, ngram_length: usize, min_word_length: usize) -> Vec<String> {
     let corpus = corpus.to_lowercase();
     let words = corpus
         .split_whitespace()
@@ -50,7 +46,7 @@ fn get_ngrams(
         chars.next();
     }
 
-    ngrams.into_iter()
+    ngrams
 }
 
 fn clean_word(word: &str, min_length: usize) -> Option<&str> {
@@ -95,35 +91,35 @@ mod tests {
     #[test]
     fn test_get_ngrams() {
         assert_eq!(
-            get_ngrams("this is a test", 3, 3).collect::<Vec<String>>(),
+            get_ngrams("this is a test", 3, 3),
             vec![
                 " th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"
             ]
         );
         assert_eq!(
-            get_ngrams("this is a test", 5, 3).collect::<Vec<String>>(),
+            get_ngrams("this is a test", 5, 3),
             vec![
                 " this", "this ", "his t", "is te", "s tes", " test", "test ", "est t", "st th",
                 "t thi",
             ]
         );
         assert_eq!(
-            get_ngrams("this is a test", 3, 2).collect::<Vec<String>>(),
+            get_ngrams("this is a test", 3, 2),
             vec![
                 " th", "thi", "his", "is ", "s i", " is", "is ", "s t", " te", "tes", "est", "st ",
                 "t t",
             ]
         );
-        assert_eq!(get_ngrams("this is a test", 3, 5).next(), None);
+        assert_eq!(get_ngrams("this is a test", 3, 5).len(), 0);
         assert_eq!(
-            get_ngrams("Some awes0me test", 6, 3).collect::<Vec<String>>(),
+            get_ngrams("Some awes0me test", 6, 3),
             vec![
                 " some ", "some t", "ome te", "me tes", "e test", " test ", "test s", "est so",
                 "st som", "t some",
             ]
         );
         assert_eq!(
-            get_ngrams("test'in", 3, 3).collect::<Vec<String>>(),
+            get_ngrams("test'in", 3, 3),
             vec![" te", "tes", "est", "st'", "t'i", "'in", "in ", "n t"]
         );
     }
