@@ -86,7 +86,7 @@ impl PassphraseMarkovChain {
         }
         let starting_dist = AliasDistribution::new(weights).unwrap();
 
-        // Build all the MarkovNodes from the tranition counts.
+        // Build all the MarkovNodes from the transition counts.
         let mut nodes: HashMap<String, MarkovNode<String>> = HashMap::new();
         let mut total_entropy: f64 = 0.0;
         for (ngram, transition_counts) in transition_counters.into_iter() {
