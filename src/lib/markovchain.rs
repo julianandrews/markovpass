@@ -69,8 +69,11 @@ impl PassphraseMarkovChain {
             if a.starts_with(" ") {
                 *starting_ngram_counts.entry(a.clone()).or_insert(0) += 1;
             }
-            let transitions = transition_counters.entry(a).or_insert(HashMap::new());
-            *transitions.entry(b.clone()).or_insert(0) += 1;
+            *transition_counters
+                .entry(a)
+                .or_insert(HashMap::new())
+                .entry(b.clone())
+                .or_insert(0) += 1;
             a = b;
         }
 
