@@ -93,7 +93,7 @@ impl PassphraseMarkovChain {
             let mut values = Vec::with_capacity(transition_counts.len());
             let mut weights = Vec::with_capacity(transition_counts.len());
             for (value, weight) in transition_counts.into_iter() {
-                values.push(value.clone());
+                values.push(value);
                 weights.push(weight as f64);
             }
 
