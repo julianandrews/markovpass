@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use lib::alias_dist::AliasDistribution;
 use lib::error::MarkovpassError;
+use std::collections::HashMap;
 
 struct MarkovChainIterator<'a> {
     markov_chain: &'a PassphraseMarkovChain,
@@ -146,7 +146,8 @@ impl PassphraseMarkovChain {
     }
 
     fn get_starting_ngram(&self) -> &str {
-        &self.nodes
+        &self
+            .nodes
             .get(&self.starting_ngrams[self.starting_dist.choice()])
             .unwrap()
             .value
@@ -202,7 +203,7 @@ mod tests {
     #[test]
     fn test_passphrases_no_starting_entropy() {
         let ngrams = vec![
-            " ab", "abc", "bc ", "c a", " ab", "abc", "cbd", "bd ", "d a"
+            " ab", "abc", "bc ", "c a", " ab", "abc", "cbd", "bd ", "d a",
         ];
         let ngrams: Vec<String> = ngrams.iter().map(|x| x.to_string()).collect();
         let result = PassphraseMarkovChain::new(ngrams.clone());
