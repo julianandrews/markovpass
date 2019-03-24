@@ -30,7 +30,7 @@ impl<T> MarkovNode<T> {
         MarkovNode {
             value: value,
             transitions: values,
-            dist: AliasDistribution::new(weights).unwrap(),
+            dist: AliasDistribution::new(&weights).unwrap(),
         }
     }
 
@@ -84,7 +84,7 @@ impl PassphraseMarkovChain {
             starting_ngrams.push(value);
             weights.push(weight as f64);
         }
-        let starting_dist = AliasDistribution::new(weights).unwrap();
+        let starting_dist = AliasDistribution::new(&weights).unwrap();
 
         // Build all the MarkovNodes from the transition counts.
         let mut nodes: HashMap<String, MarkovNode<String>> = HashMap::new();

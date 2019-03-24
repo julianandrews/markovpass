@@ -38,7 +38,7 @@ pub struct AliasDistribution {
 }
 
 impl AliasDistribution {
-    pub fn new(weights: Vec<f64>) -> Result<AliasDistribution, AliasDistributionError> {
+    pub fn new(weights: &Vec<f64>) -> Result<AliasDistribution, AliasDistributionError> {
         if weights.iter().any(|&w| w < 0.0) {
             return Err(AliasDistributionError::InvalidWeights);
         };
@@ -50,7 +50,7 @@ impl AliasDistribution {
         let mut entropy = 0.0;
 
         let mut probability_table = Vec::with_capacity(size);
-        for weight in weights.into_iter() {
+        for weight in weights.iter() {
             let prob = weight / total;
             entropy -= prob * prob.log(2.0);
             probability_table.push(prob * (size as f64));
@@ -124,9 +124,10 @@ mod tests {
         for weights in test_cases {
             let total = weights.iter().fold(0.0, |x, sum| sum + x);
             let count = weights.len() as f64;
-            let dist = AliasDistribution::new(weights.clone()).unwrap();
+            let dist = AliasDistribution::new(&weights).unwrap();
             let mut ps = vec![0.0; weights.len()];
-            for (i, (&j, p)) in dist.alias_table
+            for (i, (&j, p)) in dist
+                .alias_table
                 .iter()
                 .zip(dist.probability_table)
                 .enumerate()
@@ -142,33 +143,33 @@ mod tests {
 
     #[test]
     fn test_negative_weight() {
-        let err = AliasDistribution::new(vec![3.2, -0.3, 4.5]).unwrap_err();
+        let err = AliasDistribution::new(&vec![3.2, -0.3, 4.5]).unwrap_err();
         assert_eq!(err, AliasDistributionError::InvalidWeights);
     }
 
     #[test]
     fn test_zero_distribution() {
-        let err = AliasDistribution::new(vec![0.0, 0.0, 0.0]).unwrap_err();
+        let err = AliasDistribution::new(&vec![0.0, 0.0, 0.0]).unwrap_err();
         assert_eq!(err, AliasDistributionError::NullDistribution);
     }
 
     #[test]
     fn test_empty_distribution() {
-        let err = AliasDistribution::new(Vec::new()).unwrap_err();
+        let err = AliasDistribution::new(&Vec::new()).unwrap_err();
         assert_eq!(err, AliasDistributionError::NullDistribution);
     }
 
     #[test]
     fn test_entropy() {
-        let dist = AliasDistribution::new(vec![1.0, 1.0]).unwrap();
+        let dist = AliasDistribution::new(&vec![1.0, 1.0]).unwrap();
         assert_approx_eq!(dist.entropy, 1.0);
-        let dist = AliasDistribution::new(vec![0.5, 0.5, 1.0, 2.0]).unwrap();
+        let dist = AliasDistribution::new(&vec![0.5, 0.5, 1.0, 2.0]).unwrap();
         assert_approx_eq!(dist.entropy, 1.75);
     }
 
     #[test]
     fn test_choice() {
-        let dist = AliasDistribution::new(vec![1.0, 2.0, 3.0]).unwrap();
+        let dist = AliasDistribution::new(&vec![1.0, 2.0, 3.0]).unwrap();
         let choice = dist.choice();
         assert!(choice < 3, "{} is too large");
     }
