@@ -15,9 +15,9 @@ pub fn gen_passphrases(
     ngram_length: usize,
     min_word_length: usize,
 ) -> Result<Vec<(String, f64)>, Box<Error>> {
-    let corpus = try!(read_file_or_stdin(filename));
+    let corpus = read_file_or_stdin(filename)?;
     let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
-    let chain = try!(markovchain::PassphraseMarkovChain::new(ngrams));
+    let chain = markovchain::PassphraseMarkovChain::new(ngrams)?;
 
     let mut passphrases = Vec::with_capacity(number);
     for _ in 0..number {
@@ -65,11 +65,11 @@ fn is_word_char(c: char) -> bool {
 
 fn read_file_or_stdin(filename: Option<PathBuf>) -> Result<String, std::io::Error> {
     let mut input: Box<std::io::Read> = match filename {
-        Some(filename) => Box::new(try!(std::fs::File::open(&filename))),
+        Some(filename) => Box::new(std::fs::File::open(&filename)?),
         None => Box::new(std::io::stdin()),
     };
     let mut data = String::new();
-    try!(input.read_to_string(&mut data));
+    input.read_to_string(&mut data)?;
 
     Ok(data)
 }
@@ -92,9 +92,7 @@ mod tests {
     fn test_get_ngrams() {
         assert_eq!(
             get_ngrams("this is a test", 3, 3),
-            vec![
-                " th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"
-            ]
+            vec![" th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"]
         );
         assert_eq!(
             get_ngrams("this is a test", 5, 3),

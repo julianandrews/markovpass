@@ -27,19 +27,18 @@ pub fn parse_args(
     opts: &getopts::Options,
     args: &Vec<String>,
 ) -> Result<(Option<PathBuf>, usize, f64, usize, usize), &'static str> {
-    let matches = try!(
-        opts.parse(&args[1..])
-            .map_err(|_| "Failed to parse arguments.")
-    );
+    let matches = opts
+        .parse(&args[1..])
+        .map_err(|_| "Failed to parse arguments.")?;
 
     if matches.opt_present("h") || matches.free.len() > 1 {
         return Err("Failed to parse arguments.");
     };
 
-    let number = try!(parse_flag(&matches, "n", 1));
-    let min_entropy = try!(parse_flag(&matches, "e", 60.0));
-    let ngram_length = try!(parse_flag(&matches, "l", 3));
-    let min_word_length = try!(parse_flag(&matches, "w", 5));
+    let number = parse_flag(&matches, "n", 1)?;
+    let min_entropy = parse_flag(&matches, "e", 60.0)?;
+    let ngram_length = parse_flag(&matches, "l", 3)?;
+    let min_word_length = parse_flag(&matches, "w", 5)?;
 
     if ngram_length < 2 {
         return Err("Ngram length must be greater than one.");
