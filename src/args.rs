@@ -35,10 +35,10 @@ pub fn parse_args(
         return Err("Failed to parse arguments.");
     };
 
-    let number = parse_flag(&matches, "n", 1)?;
-    let min_entropy = parse_flag(&matches, "e", 60.0)?;
-    let ngram_length = parse_flag(&matches, "l", 3)?;
-    let min_word_length = parse_flag(&matches, "w", 5)?;
+    let number = parse_flag_or_default(&matches, "n", 1)?;
+    let min_entropy = parse_flag_or_default(&matches, "e", 60.0)?;
+    let ngram_length = parse_flag_or_default(&matches, "l", 3)?;
+    let min_word_length = parse_flag_or_default(&matches, "w", 5)?;
 
     if ngram_length < 2 {
         return Err("Ngram length must be greater than one.");
@@ -58,7 +58,7 @@ pub fn print_usage(program: &str, opts: &getopts::Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn parse_flag<T: ::std::str::FromStr>(
+fn parse_flag_or_default<T: ::std::str::FromStr>(
     matches: &getopts::Matches,
     flag: &str,
     default: T,
