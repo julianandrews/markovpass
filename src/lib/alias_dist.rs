@@ -66,10 +66,7 @@ impl AliasDistribution {
                 overfull.push(i);
             }
         }
-        loop {
-            if overfull.is_empty() || underfull.is_empty() {
-                break;
-            };
+        while !(overfull.is_empty() | underfull.is_empty()) {
             let i = underfull.pop().unwrap();
             let j = overfull.pop().unwrap();
             alias_table[i] = j;
