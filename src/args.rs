@@ -55,6 +55,7 @@ pub fn parse_args(
         .parse(&args[1..])
         .map_err(|_| "Failed to parse arguments.")?;
 
+    // TODO: Rework error handling - the 'h' handling here is dumb.
     if matches.opt_present("h") || matches.free.len() > 1 {
         return Err("Failed to parse arguments.");
     };
