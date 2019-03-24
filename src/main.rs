@@ -14,13 +14,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             error
         })?;
 
-    let passphrases =
-        lib::gen_passphrases(filename, number, min_entropy, ngram_length, min_word_length)
-            .map_err(|error| {
-                eprintln!("{}: {}", program, error.description());
+    let gen_passphrase_options = lib::GenPassphraseOptions {
+        filename: filename,
+        number: number,
+        min_entropy: min_entropy,
+        ngram_length: ngram_length,
+        min_word_length: min_word_length,
+    };
+    let passphrases = lib::gen_passphrases(&gen_passphrase_options).map_err(|error| {
+        eprintln!("{}: {}", program, error.description());
 
-                error
-            })?;
+        error
+    })?;
 
     for (passphrase, entropy) in passphrases {
         println!("{} <{}>", passphrase, entropy);

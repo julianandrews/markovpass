@@ -8,20 +8,22 @@ use std;
 use std::error::Error;
 use std::path::PathBuf;
 
-pub fn gen_passphrases(
-    filename: Option<PathBuf>,
-    number: usize,
-    min_entropy: f64,
-    ngram_length: usize,
-    min_word_length: usize,
-) -> Result<Vec<(String, f64)>, Box<Error>> {
-    let corpus = read_file_or_stdin(filename)?;
-    let ngrams = get_ngrams(&corpus, ngram_length, min_word_length);
+pub struct GenPassphraseOptions {
+    pub filename: Option<PathBuf>,
+    pub number: usize,
+    pub min_entropy: f64,
+    pub ngram_length: usize,
+    pub min_word_length: usize,
+}
+
+pub fn gen_passphrases(options: &GenPassphraseOptions) -> Result<Vec<(String, f64)>, Box<Error>> {
+    let corpus = read_file_or_stdin(&options.filename)?;
+    let ngrams = get_ngrams(&corpus, options.ngram_length, options.min_word_length);
     let chain = markovchain::PassphraseMarkovChain::new(ngrams)?;
 
-    let mut passphrases = Vec::with_capacity(number);
-    for _ in 0..number {
-        passphrases.push(chain.passphrase(min_entropy));
+    let mut passphrases = Vec::with_capacity(options.number);
+    for _ in 0..options.number {
+        passphrases.push(chain.passphrase(options.min_entropy));
     }
 
     Ok(passphrases)
@@ -63,7 +65,7 @@ fn is_word_char(c: char) -> bool {
     c.is_alphabetic() || c == '\''
 }
 
-fn read_file_or_stdin(filename: Option<PathBuf>) -> Result<String, std::io::Error> {
+fn read_file_or_stdin(filename: &Option<PathBuf>) -> Result<String, std::io::Error> {
     let mut input: Box<std::io::Read> = match filename {
         Some(filename) => Box::new(std::fs::File::open(&filename)?),
         None => Box::new(std::io::stdin()),
@@ -125,7 +127,14 @@ mod tests {
     #[test]
     fn test_gen_passphrases() {
         let p = get_testdata_pathbuf();
-        let result = gen_passphrases(Some(p), 5, 80.0, 3, 5);
+        let options = GenPassphraseOptions {
+            filename: Some(p.clone()),
+            number: 5,
+            min_entropy: 80.0,
+            ngram_length: 3,
+            min_word_length: 5,
+        };
+        let result = gen_passphrases(&options);
         assert!(result.is_ok(), "Passphrase generation failed.");
         let passphrases = result.unwrap();
         assert_eq!(passphrases.len(), 5);
@@ -134,14 +143,21 @@ mod tests {
     #[bench]
     fn bench_get_ngrams(b: &mut test::Bencher) {
         let p = get_testdata_pathbuf();
-        let corpus = read_file_or_stdin(Some(p)).unwrap();
+        let corpus = read_file_or_stdin(&Some(p)).unwrap();
         b.iter(|| get_ngrams(&corpus, 3, 5));
     }
 
     #[bench]
     fn bench_gen_passphrases(b: &mut test::Bencher) {
         let p = get_testdata_pathbuf();
-        b.iter(|| gen_passphrases(Some(p.clone()), 1, 80.0, 3, 5));
+        let options = GenPassphraseOptions {
+            filename: Some(p.clone()),
+            number: 1,
+            min_entropy: 80.0,
+            ngram_length: 3,
+            min_word_length: 5,
+        };
+        b.iter(|| gen_passphrases(&options));
     }
 
     fn get_testdata_pathbuf() -> PathBuf {
