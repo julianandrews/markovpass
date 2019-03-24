@@ -2,20 +2,44 @@ extern crate getopts;
 
 use std::path::PathBuf;
 
+const DEFAULT_NUMBER: usize = 1;
+const DEFAULT_MIN_ENTROPY: f64 = 60.0;
+const DEFAULT_NGRAM_LENGTH: usize = 3;
+const DEFAULT_MIN_WORD_LENGTH: usize = 5;
+
 pub fn build_opts() -> getopts::Options {
     let mut opts = getopts::Options::new();
     opts.optopt(
         "n",
         "",
-        "Number of passphrases to generate (default 1)",
+        &format!(
+            "Number of passphrases to generate (default {})",
+            DEFAULT_NUMBER
+        ),
         "NUM",
     );
-    opts.optopt("e", "", "Minimum entropy (default 60)", "MINENTROPY");
-    opts.optopt("l", "", "NGram length (default 3, must be > 1)", "LENGTH");
+    opts.optopt(
+        "e",
+        "",
+        &format!("Minimum entropy (default {})", DEFAULT_MIN_ENTROPY),
+        "MINENTROPY",
+    );
+    opts.optopt(
+        "l",
+        "",
+        &format!(
+            "NGram length (default {}, must be > 1)",
+            DEFAULT_NGRAM_LENGTH
+        ),
+        "LENGTH",
+    );
     opts.optopt(
         "w",
         "",
-        "Minimum word length for corpus (default 5)",
+        &format!(
+            "Minimum word length for corpus (default {})",
+            DEFAULT_MIN_WORD_LENGTH
+        ),
         "LENGTH",
     );
     opts.optflag("h", "help", "Display this help and exit");
@@ -35,10 +59,10 @@ pub fn parse_args(
         return Err("Failed to parse arguments.");
     };
 
-    let number = parse_flag_or_default(&matches, "n", 1)?;
-    let min_entropy = parse_flag_or_default(&matches, "e", 60.0)?;
-    let ngram_length = parse_flag_or_default(&matches, "l", 3)?;
-    let min_word_length = parse_flag_or_default(&matches, "w", 5)?;
+    let number = parse_flag_or_default(&matches, "n", DEFAULT_NUMBER)?;
+    let min_entropy = parse_flag_or_default(&matches, "e", DEFAULT_MIN_ENTROPY)?;
+    let ngram_length = parse_flag_or_default(&matches, "l", DEFAULT_NGRAM_LENGTH)?;
+    let min_word_length = parse_flag_or_default(&matches, "w", DEFAULT_MIN_WORD_LENGTH)?;
 
     if ngram_length < 2 {
         return Err("Ngram length must be greater than one.");
