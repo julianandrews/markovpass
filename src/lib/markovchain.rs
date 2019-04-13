@@ -60,31 +60,28 @@ impl<'a> PassphraseMarkovChain<'a> {
         if ngrams.len() == 0 {
             return Err(MarkovpassError::NoNgrams);
         }
-        let mut a = ngrams[0].clone();
-        for b in ngrams
-            .into_iter()
-            .skip(1)
-            .chain(Some(a.clone()).into_iter())
+        for (a, b) in ngrams
+            .iter()
+            .zip(ngrams.iter().skip(1).chain(Some(&ngrams[0])))
         {
             if a.starts_with(" ") {
-                *starting_ngram_counts.entry(a.clone()).or_insert(0) += 1;
+                *starting_ngram_counts.entry(a).or_insert(0) += 1;
             }
             *transition_counters
                 .entry(a)
                 .or_insert(HashMap::new())
-                .entry(b.clone())
+                .entry(b)
                 .or_insert(0) += 1;
-            a = b;
         }
 
         // Generate the starting ngram probability distribution.
         let mut starting_ngrams = Vec::with_capacity(starting_ngram_counts.len());
-        let mut weights = Vec::with_capacity(starting_ngram_counts.len());
+        let mut starting_ngram_weights = Vec::with_capacity(starting_ngram_counts.len());
         for (value, weight) in starting_ngram_counts.into_iter() {
             starting_ngrams.push(value);
-            weights.push(weight as f64);
+            starting_ngram_weights.push(weight as f64);
         }
-        let starting_dist = AliasDistribution::new(&weights).unwrap();
+        let starting_dist = AliasDistribution::new(&starting_ngram_weights).unwrap();
 
         // Build all the MarkovNodes from the transition counts.
         let mut nodes: HashMap<&str, MarkovNode<&str>> = HashMap::new();
@@ -97,7 +94,7 @@ impl<'a> PassphraseMarkovChain<'a> {
                 weights.push(weight as f64);
             }
 
-            let node = MarkovNode::new(ngram.clone(), values, weights);
+            let node = MarkovNode::new(ngram, values, weights);
             total_entropy += node.entropy();
             nodes.insert(ngram, node);
         }
