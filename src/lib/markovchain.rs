@@ -3,7 +3,7 @@ use lib::error::MarkovpassError;
 use std::collections::HashMap;
 
 struct MarkovChainIterator<'a> {
-    markov_chain: &'a PassphraseMarkovChain,
+    markov_chain: &'a PassphraseMarkovChain<'a>,
     current: &'a str,
 }
 
@@ -44,18 +44,18 @@ impl<T> MarkovNode<T> {
 }
 
 #[derive(Debug)]
-pub struct PassphraseMarkovChain {
-    nodes: HashMap<String, MarkovNode<String>>,
-    starting_ngrams: Vec<String>,
+pub struct PassphraseMarkovChain<'a> {
+    nodes: HashMap<&'a str, MarkovNode<&'a str>>,
+    starting_ngrams: Vec<&'a str>,
     starting_dist: AliasDistribution,
 }
 
-impl PassphraseMarkovChain {
-    pub fn new(ngrams: Vec<String>) -> Result<PassphraseMarkovChain, MarkovpassError> {
+impl<'a> PassphraseMarkovChain<'a> {
+    pub fn new(ngrams: Vec<&'a str>) -> Result<PassphraseMarkovChain, MarkovpassError> {
         // Count transitions and viable starting ngrams.
         // To get natural sounding words, starting ngrams should be at word start.
-        let mut transition_counters: HashMap<String, HashMap<String, usize>> = HashMap::new();
-        let mut starting_ngram_counts: HashMap<String, usize> = HashMap::new();
+        let mut transition_counters: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
+        let mut starting_ngram_counts: HashMap<&str, usize> = HashMap::new();
 
         if ngrams.len() == 0 {
             return Err(MarkovpassError::NoNgrams);
@@ -87,7 +87,7 @@ impl PassphraseMarkovChain {
         let starting_dist = AliasDistribution::new(&weights).unwrap();
 
         // Build all the MarkovNodes from the transition counts.
-        let mut nodes: HashMap<String, MarkovNode<String>> = HashMap::new();
+        let mut nodes: HashMap<&str, MarkovNode<&str>> = HashMap::new();
         let mut total_entropy: f64 = 0.0;
         for (ngram, transition_counts) in transition_counters.into_iter() {
             let mut values = Vec::with_capacity(transition_counts.len());
@@ -99,7 +99,7 @@ impl PassphraseMarkovChain {
 
             let node = MarkovNode::new(ngram.clone(), values, weights);
             total_entropy += node.entropy();
-            nodes.insert(ngram.to_string(), node);
+            nodes.insert(ngram, node);
         }
 
         if total_entropy == 0.0 {
@@ -169,15 +169,14 @@ mod tests {
     #[test]
     fn test_passphrasemarkovchain_new() {
         let ngrams = vec![" ti", "tic", "ic ", "c t", " to", "toc", "oc ", "c t"];
-        let ngrams: Vec<String> = ngrams.iter().map(|x| x.to_string()).collect();
         let result = PassphraseMarkovChain::new(ngrams.clone());
         assert!(result.is_ok());
         let chain = result.unwrap();
         assert_eq!(chain.starting_ngrams.len(), 2);
-        assert!(chain.starting_ngrams.contains(&" ti".to_string()));
-        assert!(chain.starting_ngrams.contains(&" to".to_string()));
+        assert!(chain.starting_ngrams.contains(&" ti"));
+        assert!(chain.starting_ngrams.contains(&" to"));
         assert_eq!(chain.starting_dist.entropy, 1.0);
-        assert!(ngrams.contains(&chain.get_starting_ngram().to_string()));
+        assert!(ngrams.contains(&chain.get_starting_ngram()));
         let (p, e) = chain.passphrase(60.0);
         assert_eq!(e, 60.0);
         assert_eq!(p.len(), 239);
@@ -185,8 +184,8 @@ mod tests {
 
     #[test]
     fn test_passphrase_no_ngrams() {
-        let ngrams: Vec<String> = vec![];
-        let result = PassphraseMarkovChain::new(ngrams.clone());
+        let ngrams: Vec<&str> = vec![];
+        let result = PassphraseMarkovChain::new(ngrams);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), MarkovpassError::NoNgrams);
     }
@@ -194,8 +193,7 @@ mod tests {
     #[test]
     fn test_passphrase_no_entropy() {
         let ngrams = vec![" ab", "abc", "bcd", "cd ", "d a"];
-        let ngrams: Vec<String> = ngrams.iter().map(|x| x.to_string()).collect();
-        let result = PassphraseMarkovChain::new(ngrams.clone());
+        let result = PassphraseMarkovChain::new(ngrams);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), MarkovpassError::NoEntropy);
     }
@@ -205,8 +203,7 @@ mod tests {
         let ngrams = vec![
             " ab", "abc", "bc ", "c a", " ab", "abc", "cbd", "bd ", "d a",
         ];
-        let ngrams: Vec<String> = ngrams.iter().map(|x| x.to_string()).collect();
-        let result = PassphraseMarkovChain::new(ngrams.clone());
+        let result = PassphraseMarkovChain::new(ngrams);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), MarkovpassError::NoStartOfWordEntropy);
     }
