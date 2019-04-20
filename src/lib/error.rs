@@ -7,26 +7,16 @@ pub enum MarkovpassError {
     NoStartOfWordEntropy,
 }
 
+impl std::error::Error for MarkovpassError {}
+
 impl std::fmt::Display for MarkovpassError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            MarkovpassError::NoNgrams => write!(f, "NoNgrams"),
-            MarkovpassError::NoEntropy => write!(f, "NoEntropy"),
-            MarkovpassError::NoStartOfWordEntropy => write!(f, "NoStartOfWordEntropy"),
+            MarkovpassError::NoNgrams => write!(f, "No ngrams found in cleaned input."),
+            MarkovpassError::NoEntropy => write!(f, "Cleaned input has no entropy."),
+            MarkovpassError::NoStartOfWordEntropy => {
+                write!(f, "Cleaned input has not start of word entropy.")
+            }
         }
-    }
-}
-
-impl std::error::Error for MarkovpassError {
-    fn description(&self) -> &str {
-        match *self {
-            MarkovpassError::NoNgrams => "No ngrams found in input",
-            MarkovpassError::NoEntropy => "Input has no entropy",
-            MarkovpassError::NoStartOfWordEntropy => "Input has no start of word entropy",
-        }
-    }
-
-    fn cause(&self) -> Option<&std::error::Error> {
-        None
     }
 }
