@@ -1,4 +1,4 @@
-// A corpus of cleaned text optimized for generating ngrams as string slices.
+// A corpus of cleaned text with wrap around to allow string slices that wrap.
 pub struct Corpus {
     text: String,
     wrap_around: String,
@@ -8,9 +8,15 @@ pub struct Corpus {
 impl Corpus {
     pub fn new(text: &str, ngram_length: usize, min_word_length: usize) -> Corpus {
         let text = clean_corpus(text, min_word_length);
-        // TODO: handle unwrap failure.
-        let (last_index, _) = text.char_indices().rev().nth(ngram_length - 1).unwrap();
-        let mut wrap_around: String = text[last_index..].to_string();
+
+        // Populate wrap_around from the end of the text and the start of the text.
+        let wrap_around_index = text
+            .char_indices()
+            .rev()
+            .nth(ngram_length - 1)
+            .map(|(i, _)| i)
+            .unwrap_or(0);
+        let mut wrap_around: String = text[wrap_around_index..].to_string();
         wrap_around.push_str(&text.chars().take(ngram_length).collect::<String>());
 
         Corpus {
@@ -42,6 +48,7 @@ fn clean_corpus(text: &str, min_word_length: usize) -> String {
         .split_whitespace()
         .filter_map(|word| clean_word(word, min_word_length));
 
+    // Insert a space at the start of the corpus so that every word begins with a space.
     Some("")
         .into_iter()
         .chain(words)
