@@ -65,6 +65,7 @@ pub fn build_opts() -> getopts::Options {
         "LENGTH",
     );
     opts.optflag("h", "help", "Display this help and exit");
+    opts.optflag("", "show-entropy", "Print the entropy for each passphrase");
 
     opts
 }
@@ -76,6 +77,7 @@ pub struct MarkovpassArgs {
     pub ngram_length: usize,
     pub min_word_length: usize,
     pub print_help: bool,
+    pub show_entropy: bool,
 }
 
 pub fn parse_args(
@@ -96,6 +98,7 @@ pub fn parse_args(
     let ngram_length = parse_flag_or_default(&matches, "l", DEFAULT_NGRAM_LENGTH)?;
     let min_word_length = parse_flag_or_default(&matches, "w", DEFAULT_MIN_WORD_LENGTH)?;
     let print_help = matches.opt_present("h");
+    let show_entropy = matches.opt_present("show-entropy");
 
     if ngram_length <= 1 {
         return Err(UsageError::NgramLengthError);
@@ -114,6 +117,7 @@ pub fn parse_args(
         ngram_length: ngram_length,
         min_word_length: min_word_length,
         print_help: print_help,
+        show_entropy: show_entropy,
     })
 }
 

@@ -36,6 +36,10 @@ fn main() {
     };
 
     for (passphrase, entropy) in passphrases {
-        println!("{} <{}>", passphrase, entropy);
+        if parsed_args.show_entropy {
+            println!("{} <{}>", passphrase, entropy);
+        } else {
+            println!("{}", passphrase);
+        }
     }
 }

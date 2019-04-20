@@ -12,7 +12,7 @@ memorization, length, and passphrases quality. The passphrases produced look
 something like::
 
     qurken ret which bettle nurence
-    
+
 or::
 
     facupid trible taxed partice
@@ -37,6 +37,7 @@ Usage
       -l LENGTH           NGram length (default 3)
       -w LENGTH           Minimum word length for corpus (default 5)
       -h, --help          Display this help and exit
+          --show-entropy  Print the entropy for each passphrase
 
 ``markovpass`` requires a corpus to work with. The corpus can be provided via
 the ``FILE`` argument. Alternatively, ``markovpass`` will look for data on
