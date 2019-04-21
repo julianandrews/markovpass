@@ -1,4 +1,4 @@
-use std;
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum MarkovpassError {
@@ -7,10 +7,10 @@ pub enum MarkovpassError {
     NoStartOfWordEntropy,
 }
 
-impl std::error::Error for MarkovpassError {}
+impl ::std::error::Error for MarkovpassError {}
 
-impl std::fmt::Display for MarkovpassError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for MarkovpassError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             MarkovpassError::NoNgrams => write!(f, "No ngrams found in cleaned input."),
             MarkovpassError::NoEntropy => write!(f, "Cleaned input has no entropy."),

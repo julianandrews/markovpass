@@ -1,12 +1,12 @@
 extern crate getopts;
 
-use std;
-use std::path::PathBuf;
-
 const DEFAULT_NUMBER: usize = 1;
 const DEFAULT_MIN_ENTROPY: f64 = 60.0;
 const DEFAULT_NGRAM_LENGTH: usize = 3;
 const DEFAULT_MIN_WORD_LENGTH: usize = 5;
+
+use std::fmt;
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq)]
 pub enum UsageError {
@@ -16,8 +16,8 @@ pub enum UsageError {
     FlagParseError,
 }
 
-impl std::fmt::Display for UsageError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for UsageError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             UsageError::ArgumentParseError => write!(f, "Failed to parse arguments."),
             UsageError::TooManyInputsError => write!(f, "Too many inputs."),
@@ -27,7 +27,7 @@ impl std::fmt::Display for UsageError {
     }
 }
 
-impl std::error::Error for UsageError {}
+impl ::std::error::Error for UsageError {}
 
 pub fn build_opts() -> getopts::Options {
     let mut opts = getopts::Options::new();

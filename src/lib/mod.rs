@@ -5,8 +5,8 @@ mod corpus;
 mod error;
 mod markovchain;
 
-use std;
-use std::error::Error;
+use std::fs::File;
+use std::io;
 use std::path::PathBuf;
 
 pub struct GenPassphraseOptions {
@@ -17,7 +17,9 @@ pub struct GenPassphraseOptions {
     pub min_word_length: usize,
 }
 
-pub fn gen_passphrases(options: &GenPassphraseOptions) -> Result<Vec<(String, f64)>, Box<Error>> {
+pub fn gen_passphrases(
+    options: &GenPassphraseOptions,
+) -> Result<Vec<(String, f64)>, Box<::std::error::Error>> {
     let text = read_file_or_stdin(&options.filename)?;
     let corpus = corpus::Corpus::new(&text, options.ngram_length, options.min_word_length);
     let ngrams = corpus.get_ngrams();
@@ -30,10 +32,10 @@ pub fn gen_passphrases(options: &GenPassphraseOptions) -> Result<Vec<(String, f6
     Ok(passphrases)
 }
 
-fn read_file_or_stdin(filename: &Option<PathBuf>) -> Result<String, std::io::Error> {
-    let mut input: Box<std::io::Read> = match filename {
-        Some(filename) => Box::new(std::fs::File::open(&filename)?),
-        None => Box::new(std::io::stdin()),
+fn read_file_or_stdin(filename: &Option<PathBuf>) -> Result<String, io::Error> {
+    let mut input: Box<io::Read> = match filename {
+        Some(filename) => Box::new(File::open(&filename)?),
+        None => Box::new(io::stdin()),
     };
     let mut data = String::new();
     input.read_to_string(&mut data)?;
