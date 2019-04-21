@@ -1,32 +1,26 @@
 extern crate rand;
 
 use self::rand::Rng;
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum AliasDistributionError {
-    InvalidWeights,
+    NegativeWeight,
     NullDistribution,
 }
 
-impl ::std::fmt::Display for AliasDistributionError {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        match *self {
-            AliasDistributionError::InvalidWeights => write!(f, "InvalidWeights"),
-            AliasDistributionError::NullDistribution => write!(f, "NullDistribution"),
-        }
-    }
-}
+impl ::std::error::Error for AliasDistributionError {}
 
-impl ::std::error::Error for AliasDistributionError {
-    fn description(&self) -> &str {
+impl fmt::Display for AliasDistributionError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            AliasDistributionError::InvalidWeights => "Negative weights are not allowed",
-            AliasDistributionError::NullDistribution => "Sum of weights must not be zero",
+            AliasDistributionError::NegativeWeight => {
+                write!(f, "Negative weights are not allowed.")
+            }
+            AliasDistributionError::NullDistribution => {
+                write!(f, "Sum of weights must be non-zero.")
+            }
         }
-    }
-
-    fn cause(&self) -> Option<&::std::error::Error> {
-        None
     }
 }
 
@@ -40,7 +34,7 @@ pub struct AliasDistribution {
 impl AliasDistribution {
     pub fn new(weights: &Vec<f64>) -> Result<AliasDistribution, AliasDistributionError> {
         if weights.iter().any(|&w| w < 0.0) {
-            return Err(AliasDistributionError::InvalidWeights);
+            return Err(AliasDistributionError::NegativeWeight);
         };
         let size = weights.len();
         let total = weights.iter().fold(0.0, |sum, x| sum + x);
@@ -147,7 +141,7 @@ mod tests {
     #[test]
     fn test_negative_weight() {
         let err = AliasDistribution::new(&vec![3.2, -0.3, 4.5]).unwrap_err();
-        assert_eq!(err, AliasDistributionError::InvalidWeights);
+        assert_eq!(err, AliasDistributionError::NegativeWeight);
     }
 
     #[test]
