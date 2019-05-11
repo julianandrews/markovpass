@@ -60,9 +60,7 @@ impl AliasDistribution {
                 overfull.push(i);
             }
         }
-        while !(overfull.is_empty() | underfull.is_empty()) {
-            let i = underfull.pop().unwrap();
-            let j = overfull.pop().unwrap();
+        while let (Some(i), Some(j)) = (underfull.pop(), overfull.pop()) {
             alias_table[i] = j;
             probability_table[j] += probability_table[i] - 1.0;
             if probability_table[j] < 1.0 {
