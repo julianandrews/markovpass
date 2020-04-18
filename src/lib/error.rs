@@ -7,7 +7,7 @@ pub enum MarkovpassError {
     NoStartOfWordEntropy,
 }
 
-impl ::std::error::Error for MarkovpassError {}
+impl std::error::Error for MarkovpassError {}
 
 impl fmt::Display for MarkovpassError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

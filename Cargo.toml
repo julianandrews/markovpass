@@ -2,6 +2,7 @@
 name = "markovpass"
 version = "1.0.0"
 authors = ["Julian Andrews <jandrews271@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 getopts = "0.2"

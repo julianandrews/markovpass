@@ -1,5 +1,5 @@
-use lib::alias_dist::AliasDistribution;
-use lib::error::MarkovpassError;
+use super::alias_dist::AliasDistribution;
+use super::error::MarkovpassError;
 use std::collections::HashMap;
 
 struct MarkovChainIterator<'a> {

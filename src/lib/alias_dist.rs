@@ -1,6 +1,6 @@
 extern crate rand;
 
-use self::rand::Rng;
+use rand::Rng;
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
