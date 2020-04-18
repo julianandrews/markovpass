@@ -5,20 +5,24 @@ pub struct Corpus {
 }
 
 impl Corpus {
-    // TODO: Instead of taking an &str this should take Box<dyn std::io::Read>. With a little
-    // tweaking this should be able to only perform a single allocation and build the cleaned
-    // corpus with wrap around in one go.
-    pub fn new(text: &str, ngram_length: usize, min_word_length: usize) -> Corpus {
-        let mut text = Corpus::clean_text(text, min_word_length);
+    pub fn new(
+        mut reader: Box<dyn std::io::Read>,
+        ngram_length: usize,
+        min_word_length: usize,
+    ) -> Result<Corpus, Box<dyn std::error::Error>> {
+        // TODO: Process the input to generate text efficiently.
+        let mut text = String::new();
+        reader.read_to_string(&mut text)?;
+        let mut text = Corpus::clean_text(&text, min_word_length);
         let original_byte_length = text.len();
         // Push the first few characters onto the end so we can return `&str`s for the wrap around.
         text.push_str(&text.chars().take(ngram_length).collect::<String>());
 
-        Corpus {
+        Ok(Corpus {
             text: text,
             ngram_length: ngram_length,
             original_byte_length: original_byte_length,
-        }
+        })
     }
 
     pub fn ngrams(&self) -> impl Iterator<Item = &str> {
@@ -109,13 +113,13 @@ mod tests {
 
     #[test]
     fn test_ngrams() {
-        let corpus = Corpus::new("this is a test", 3, 3);
+        let corpus = Corpus::new(Box::new("this is a test".as_bytes()), 3, 3).unwrap();
         let ngrams = corpus.ngrams();
         assert_eq!(
             ngrams.collect::<Vec<_>>(),
             vec![" th", "thi", "his", "is ", "s t", " te", "tes", "est", "st ", "t t"]
         );
-        let corpus = Corpus::new("this is a test", 5, 3);
+        let corpus = Corpus::new(Box::new("this is a test".as_bytes()), 5, 3).unwrap();
         let ngrams = corpus.ngrams();
         assert_eq!(
             ngrams.collect::<Vec<_>>(),
@@ -124,7 +128,7 @@ mod tests {
                 "t thi",
             ]
         );
-        let corpus = Corpus::new("this is a test", 3, 2);
+        let corpus = Corpus::new(Box::new("this is a test".as_bytes()), 3, 2).unwrap();
         let ngrams = corpus.ngrams();
         assert_eq!(
             ngrams.collect::<Vec<_>>(),

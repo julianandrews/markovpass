@@ -20,8 +20,11 @@ pub struct GenPassphraseOptions {
 pub fn gen_passphrases(
     options: &GenPassphraseOptions,
 ) -> Result<Vec<(String, f64)>, Box<dyn std::error::Error>> {
-    let text = read_file_or_stdin(&options.filename)?;
-    let corpus = corpus::Corpus::new(&text, options.ngram_length, options.min_word_length);
+    let reader: Box<dyn io::Read> = match &options.filename {
+        Some(filename) => Box::new(io::BufReader::new(File::open(&filename)?)),
+        None => Box::new(io::stdin()),
+    };
+    let corpus = corpus::Corpus::new(reader, options.ngram_length, options.min_word_length)?;
     let chain = markovchain::PassphraseMarkovChain::new(corpus.ngrams())?;
 
     let passphrases = (0..options.number)
@@ -29,17 +32,6 @@ pub fn gen_passphrases(
         .collect();
 
     Ok(passphrases)
-}
-
-fn read_file_or_stdin(filename: &Option<PathBuf>) -> Result<String, io::Error> {
-    let mut input: Box<dyn io::Read> = match filename {
-        Some(filename) => Box::new(File::open(&filename)?),
-        None => Box::new(io::stdin()),
-    };
-    let mut data = String::new();
-    input.read_to_string(&mut data)?;
-
-    Ok(data)
 }
 
 #[cfg(test)]
