@@ -5,7 +5,7 @@ use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum AliasDistributionError {
-    NegativeWeight,
+    InvalidWeight,
     NullDistribution,
 }
 
@@ -14,8 +14,8 @@ impl ::std::error::Error for AliasDistributionError {}
 impl fmt::Display for AliasDistributionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            AliasDistributionError::NegativeWeight => {
-                write!(f, "Negative weights are not allowed.")
+            AliasDistributionError::InvalidWeight => {
+                write!(f, "Weights must be finite non-negative values.")
             }
             AliasDistributionError::NullDistribution => {
                 write!(f, "Sum of weights must be non-zero.")
@@ -33,11 +33,14 @@ pub struct AliasDistribution {
 
 impl AliasDistribution {
     pub fn new(weights: &Vec<f64>) -> Result<AliasDistribution, AliasDistributionError> {
-        if weights.iter().any(|&w| w < 0.0) {
-            return Err(AliasDistributionError::NegativeWeight);
+        if weights
+            .iter()
+            .any(|&w| w.is_sign_negative() || !w.is_finite())
+        {
+            return Err(AliasDistributionError::InvalidWeight);
         };
         let size = weights.len();
-        let total = weights.iter().fold(0.0, |sum, x| sum + x);
+        let total: f64 = weights.iter().sum();
         if total == 0.0 {
             return Err(AliasDistributionError::NullDistribution);
         };
@@ -81,14 +84,11 @@ impl AliasDistribution {
         // TODO: Catch the potential error and let the caller decide what to do.
         let mut rng = rand::OsRng::new().unwrap();
         let i = rng.gen_range(0, self.probability_table.len());
-        let y = rng.gen();
-        let choice = if self.probability_table[i] >= y {
+        if self.probability_table[i] >= rng.gen() {
             i
         } else {
             self.alias_table[i]
-        };
-
-        choice
+        }
     }
 }
 
@@ -139,7 +139,19 @@ mod tests {
     #[test]
     fn test_negative_weight() {
         let err = AliasDistribution::new(&vec![3.2, -0.3, 4.5]).unwrap_err();
-        assert_eq!(err, AliasDistributionError::NegativeWeight);
+        assert_eq!(err, AliasDistributionError::InvalidWeight);
+    }
+
+    #[test]
+    fn test_nan_weight() {
+        let err = AliasDistribution::new(&vec![3.2, f64::NAN, 4.5]).unwrap_err();
+        assert_eq!(err, AliasDistributionError::InvalidWeight);
+    }
+
+    #[test]
+    fn test_infinite() {
+        let err = AliasDistribution::new(&vec![3.2, 0.5, f64::INFINITY]).unwrap_err();
+        assert_eq!(err, AliasDistributionError::InvalidWeight);
     }
 
     #[test]
