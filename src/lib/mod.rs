@@ -19,7 +19,7 @@ pub struct GenPassphraseOptions {
 
 pub fn gen_passphrases(
     options: &GenPassphraseOptions,
-) -> Result<Vec<(String, f64)>, Box<::std::error::Error>> {
+) -> Result<Vec<(String, f64)>, Box<dyn std::error::Error>> {
     let text = read_file_or_stdin(&options.filename)?;
     let corpus = corpus::Corpus::new(&text, options.ngram_length, options.min_word_length);
     let ngrams = corpus.get_ngrams();
@@ -33,7 +33,7 @@ pub fn gen_passphrases(
 }
 
 fn read_file_or_stdin(filename: &Option<PathBuf>) -> Result<String, io::Error> {
-    let mut input: Box<io::Read> = match filename {
+    let mut input: Box<dyn io::Read> = match filename {
         Some(filename) => Box::new(File::open(&filename)?),
         None => Box::new(io::stdin()),
     };
