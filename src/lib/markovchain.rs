@@ -1,9 +1,30 @@
 extern crate rand;
 
-use super::error::MarkovpassError;
 use rand::distributions::weighted::alias_method::WeightedIndex;
 use rand::prelude::*;
 use std::collections::HashMap;
+use std::fmt;
+
+#[derive(Debug, PartialEq)]
+pub enum MarkovChainError {
+    NoNgrams,
+    NoEntropy,
+    NoStartOfWordEntropy,
+}
+
+impl std::error::Error for MarkovChainError {}
+
+impl fmt::Display for MarkovChainError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            MarkovChainError::NoNgrams => write!(f, "No ngrams found in cleaned input."),
+            MarkovChainError::NoEntropy => write!(f, "Cleaned input has no entropy."),
+            MarkovChainError::NoStartOfWordEntropy => {
+                write!(f, "Cleaned input has not start of word entropy.")
+            }
+        }
+    }
+}
 
 struct MarkovChainIterator<'a> {
     markov_chain: &'a PassphraseMarkovChain<'a>,
@@ -60,13 +81,13 @@ pub struct PassphraseMarkovChain<'a> {
 impl<'a> PassphraseMarkovChain<'a> {
     pub fn new(
         ngrams: impl Iterator<Item = &'a str>,
-    ) -> Result<PassphraseMarkovChain<'a>, MarkovpassError> {
+    ) -> Result<PassphraseMarkovChain<'a>, MarkovChainError> {
         // Count transitions and viable starting ngrams.
         // To get natural sounding words, starting ngrams should be at word start.
         let mut transition_counters: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
         let mut starting_ngram_counts: HashMap<&str, usize> = HashMap::new();
         let mut ngrams = ngrams.peekable();
-        let first_ngram = ngrams.peek().ok_or(MarkovpassError::NoNgrams)?.clone();
+        let first_ngram = ngrams.peek().ok_or(MarkovChainError::NoNgrams)?.clone();
         while let Some(current_ngram) = ngrams.next() {
             if current_ngram.starts_with(" ") {
                 *starting_ngram_counts.entry(current_ngram).or_insert(0) += 1;
@@ -108,9 +129,9 @@ impl<'a> PassphraseMarkovChain<'a> {
         }
 
         if total_entropy == 0.0 {
-            return Err(MarkovpassError::NoEntropy);
+            return Err(MarkovChainError::NoEntropy);
         } else if starting_entropy == 0.0 {
-            return Err(MarkovpassError::NoStartOfWordEntropy);
+            return Err(MarkovChainError::NoStartOfWordEntropy);
         }
 
         Ok(PassphraseMarkovChain {
@@ -200,7 +221,7 @@ mod tests {
     fn test_passphrase_no_ngrams() {
         let result = PassphraseMarkovChain::new(std::iter::empty());
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), MarkovpassError::NoNgrams);
+        assert_eq!(result.unwrap_err(), MarkovChainError::NoNgrams);
     }
 
     #[test]
@@ -208,7 +229,7 @@ mod tests {
         let ngrams = vec![" ab", "abc", "bcd", "cd ", "d a"];
         let result = PassphraseMarkovChain::new(ngrams.into_iter());
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), MarkovpassError::NoEntropy);
+        assert_eq!(result.unwrap_err(), MarkovChainError::NoEntropy);
     }
 
     #[test]
@@ -218,6 +239,6 @@ mod tests {
         ];
         let result = PassphraseMarkovChain::new(ngrams.into_iter());
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), MarkovpassError::NoStartOfWordEntropy);
+        assert_eq!(result.unwrap_err(), MarkovChainError::NoStartOfWordEntropy);
     }
 }

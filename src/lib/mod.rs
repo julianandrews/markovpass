@@ -1,7 +1,6 @@
 extern crate test;
 
 mod corpus;
-mod error;
 mod markovchain;
 
 use std::fs::File;
