@@ -10,7 +10,7 @@ struct MarkovChainIterator<'a> {
 impl<'a> Iterator for MarkovChainIterator<'a> {
     type Item = &'a str;
 
-    fn next(&mut self) -> Option<&'a str> {
+    fn next(&mut self) -> Option<Self::Item> {
         let last = self.current;
         self.current = self.markov_chain.get_next_ngram(&self.current);
 
@@ -117,7 +117,7 @@ impl<'a> PassphraseMarkovChain<'a> {
         let mut entropy = self.starting_dist.entropy;
 
         for ngram in self.iter() {
-            selected_ngrams.push(ngram.clone());
+            selected_ngrams.push(ngram);
             entropy += self.ngram_entropy(&ngram);
             if entropy >= min_entropy && ngram.ends_with(" ") {
                 break;
@@ -137,8 +137,8 @@ impl<'a> PassphraseMarkovChain<'a> {
 
     fn iter(&self) -> MarkovChainIterator {
         MarkovChainIterator {
-            markov_chain: &self,
-            current: &self.get_starting_ngram(),
+            markov_chain: self,
+            current: self.get_starting_ngram(),
         }
     }
 
