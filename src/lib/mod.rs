@@ -22,8 +22,7 @@ pub fn gen_passphrases(
 ) -> Result<Vec<(String, f64)>, Box<dyn std::error::Error>> {
     let text = read_file_or_stdin(&options.filename)?;
     let corpus = corpus::Corpus::new(&text, options.ngram_length, options.min_word_length);
-    let ngrams = corpus.get_ngrams();
-    let chain = markovchain::PassphraseMarkovChain::new(ngrams)?;
+    let chain = markovchain::PassphraseMarkovChain::new(corpus.ngrams())?;
 
     let passphrases = (0..options.number)
         .map(|_| chain.passphrase(options.min_entropy))
