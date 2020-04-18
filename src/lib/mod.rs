@@ -1,6 +1,5 @@
 extern crate test;
 
-mod alias_dist;
 mod corpus;
 mod error;
 mod markovchain;

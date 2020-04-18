@@ -1,5 +1,8 @@
-use super::alias_dist::AliasDistribution;
+extern crate rand;
+
 use super::error::MarkovpassError;
+use rand::distributions::weighted::alias_method::WeightedIndex;
+use rand::prelude::*;
 use std::collections::HashMap;
 
 struct MarkovChainIterator<'a> {
@@ -22,24 +25,27 @@ impl<'a> Iterator for MarkovChainIterator<'a> {
 struct MarkovNode<T> {
     pub value: T,
     transitions: Vec<T>,
-    dist: AliasDistribution,
+    dist: WeightedIndex<f64>,
+    entropy: f64,
 }
 
 impl<T> MarkovNode<T> {
     pub fn new(value: T, values: Vec<T>, weights: Vec<f64>) -> MarkovNode<T> {
+        let entropy = weight_entropy(&weights);
         MarkovNode {
             value: value,
             transitions: values,
-            dist: AliasDistribution::new(&weights).unwrap(),
+            dist: WeightedIndex::new(weights).unwrap(),
+            entropy: entropy,
         }
     }
 
     pub fn next(&self) -> &T {
-        &self.transitions[self.dist.choice()]
+        &self.transitions[self.dist.sample(&mut rand::rngs::OsRng)]
     }
 
     pub fn entropy(&self) -> f64 {
-        self.dist.entropy
+        self.entropy
     }
 }
 
@@ -47,7 +53,8 @@ impl<T> MarkovNode<T> {
 pub struct PassphraseMarkovChain<'a> {
     nodes: HashMap<&'a str, MarkovNode<&'a str>>,
     starting_ngrams: Vec<&'a str>,
-    starting_dist: AliasDistribution,
+    starting_dist: WeightedIndex<f64>,
+    starting_entropy: f64,
 }
 
 impl<'a> PassphraseMarkovChain<'a> {
@@ -81,7 +88,8 @@ impl<'a> PassphraseMarkovChain<'a> {
             starting_ngrams.push(value);
             starting_ngram_weights.push(weight as f64);
         }
-        let starting_dist = AliasDistribution::new(&starting_ngram_weights).unwrap();
+        let starting_entropy = weight_entropy(&starting_ngram_weights);
+        let starting_dist = WeightedIndex::new(starting_ngram_weights).unwrap();
 
         // Build all the MarkovNodes from the transition counts.
         let mut nodes: HashMap<&str, MarkovNode<&str>> = HashMap::new();
@@ -101,20 +109,21 @@ impl<'a> PassphraseMarkovChain<'a> {
 
         if total_entropy == 0.0 {
             return Err(MarkovpassError::NoEntropy);
-        } else if starting_dist.entropy == 0.0 {
+        } else if starting_entropy == 0.0 {
             return Err(MarkovpassError::NoStartOfWordEntropy);
-        };
+        }
 
         Ok(PassphraseMarkovChain {
             nodes: nodes,
             starting_ngrams: starting_ngrams,
             starting_dist: starting_dist,
+            starting_entropy: starting_entropy,
         })
     }
 
     pub fn passphrase(&self, min_entropy: f64) -> (String, f64) {
         let mut selected_ngrams = Vec::new();
-        let mut entropy = self.starting_dist.entropy;
+        let mut entropy = self.starting_entropy;
 
         for ngram in self.iter() {
             selected_ngrams.push(ngram);
@@ -145,7 +154,7 @@ impl<'a> PassphraseMarkovChain<'a> {
     fn get_starting_ngram(&self) -> &str {
         &self
             .nodes
-            .get(&self.starting_ngrams[self.starting_dist.choice()])
+            .get(&self.starting_ngrams[self.starting_dist.sample(&mut rand::rngs::OsRng)])
             .unwrap()
             .value
     }
@@ -157,6 +166,14 @@ impl<'a> PassphraseMarkovChain<'a> {
     fn ngram_entropy(&self, ngram: &str) -> f64 {
         self.nodes.get(ngram).unwrap().entropy()
     }
+}
+
+fn weight_entropy(weights: &Vec<f64>) -> f64 {
+    let total: f64 = weights.iter().sum();
+    weights.iter().fold(0.0, |acc, weight| {
+        let prob = weight / total;
+        acc - prob * prob.log(2.0)
+    })
 }
 
 #[cfg(test)]
@@ -172,7 +189,7 @@ mod tests {
         assert_eq!(chain.starting_ngrams.len(), 2);
         assert!(chain.starting_ngrams.contains(&" ti"));
         assert!(chain.starting_ngrams.contains(&" to"));
-        assert_eq!(chain.starting_dist.entropy, 1.0);
+        assert_eq!(chain.starting_entropy, 1.0);
         assert!(ngrams.contains(&chain.get_starting_ngram()));
         let (p, e) = chain.passphrase(60.0);
         assert_eq!(e, 60.0);
