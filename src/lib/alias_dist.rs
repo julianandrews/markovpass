@@ -81,8 +81,7 @@ impl AliasDistribution {
     }
 
     pub fn choice(&self) -> usize {
-        // TODO: Catch the potential error and let the caller decide what to do.
-        let mut rng = rand::OsRng::new().unwrap();
+        let mut rng = rand::rngs::OsRng;
         let i = rng.gen_range(0, self.probability_table.len());
         if self.probability_table[i] >= rng.gen() {
             i
