@@ -54,10 +54,10 @@ impl<T> MarkovNode<T> {
     pub fn new(value: T, values: Vec<T>, weights: Vec<f64>) -> MarkovNode<T> {
         let entropy = weight_entropy(&weights);
         MarkovNode {
-            value: value,
+            value,
             transitions: values,
             dist: WeightedIndex::new(weights).unwrap(),
-            entropy: entropy,
+            entropy,
         }
     }
 
@@ -87,9 +87,9 @@ impl<'a> PassphraseMarkovChain<'a> {
         let mut transition_counters: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
         let mut starting_ngram_counts: HashMap<&str, usize> = HashMap::new();
         let mut ngrams = ngrams.peekable();
-        let first_ngram = ngrams.peek().ok_or(MarkovChainError::NoNgrams)?.clone();
+        let first_ngram = <&str>::clone(ngrams.peek().ok_or(MarkovChainError::NoNgrams)?);
         while let Some(current_ngram) = ngrams.next() {
-            if current_ngram.starts_with(" ") {
+            if current_ngram.starts_with(' ') {
                 *starting_ngram_counts.entry(current_ngram).or_insert(0) += 1;
             }
             // To guarantee every ngram has at least one valid transition, let the last ngram
@@ -97,7 +97,7 @@ impl<'a> PassphraseMarkovChain<'a> {
             let next_ngram = ngrams.peek().unwrap_or(&first_ngram);
             *transition_counters
                 .entry(current_ngram)
-                .or_insert(HashMap::new())
+                .or_insert_with(HashMap::new)
                 .entry(next_ngram)
                 .or_insert(0) += 1;
         }
@@ -135,10 +135,10 @@ impl<'a> PassphraseMarkovChain<'a> {
         }
 
         Ok(PassphraseMarkovChain {
-            nodes: nodes,
-            starting_ngrams: starting_ngrams,
-            starting_dist: starting_dist,
-            starting_entropy: starting_entropy,
+            nodes,
+            starting_ngrams,
+            starting_dist,
+            starting_entropy,
         })
     }
 
@@ -149,7 +149,7 @@ impl<'a> PassphraseMarkovChain<'a> {
         for ngram in self.iter() {
             selected_ngrams.push(ngram);
             entropy += self.ngram_entropy(&ngram);
-            if entropy >= min_entropy && ngram.ends_with(" ") {
+            if entropy >= min_entropy && ngram.ends_with(' ') {
                 break;
             }
         }
@@ -189,7 +189,7 @@ impl<'a> PassphraseMarkovChain<'a> {
     }
 }
 
-fn weight_entropy(weights: &Vec<f64>) -> f64 {
+fn weight_entropy(weights: &[f64]) -> f64 {
     let total: f64 = weights.iter().sum();
     weights.iter().fold(0.0, |acc, weight| {
         let prob = weight / total;

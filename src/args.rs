@@ -80,10 +80,7 @@ pub struct MarkovpassArgs {
     pub show_entropy: bool,
 }
 
-pub fn parse_args(
-    opts: &getopts::Options,
-    args: &Vec<String>,
-) -> Result<MarkovpassArgs, UsageError> {
+pub fn parse_args(opts: &getopts::Options, args: &[String]) -> Result<MarkovpassArgs, UsageError> {
     let matches = opts
         .parse(&args[1..])
         .map_err(|_| UsageError::ArgumentParseError)?;
@@ -111,13 +108,13 @@ pub fn parse_args(
     };
 
     Ok(MarkovpassArgs {
-        filename: filename,
-        number: number,
-        min_entropy: min_entropy,
-        ngram_length: ngram_length,
-        min_word_length: min_word_length,
-        print_help: print_help,
-        show_entropy: show_entropy,
+        filename,
+        number,
+        min_entropy,
+        ngram_length,
+        min_word_length,
+        print_help,
+        show_entropy,
     })
 }
 

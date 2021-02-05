@@ -19,9 +19,9 @@ impl Corpus {
         text.push_str(&text.chars().take(ngram_length).collect::<String>());
 
         Ok(Corpus {
-            text: text,
-            ngram_length: ngram_length,
-            original_byte_length: original_byte_length,
+            text,
+            ngram_length,
+            original_byte_length,
         })
     }
 
