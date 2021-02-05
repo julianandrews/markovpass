@@ -1,6 +1,8 @@
 Markovpass
 ==========
 
+.. image:: https://github.com/julianandrews/markovpass/workflows/Continuous%20integration/badge.svg
+
 A Markov chain based passphrase generator with entropy estimation.
 ``markovpass`` generates randomized passphrases based on a Markov chain along
 with the total Shannon entropy of the nodes traversed. Long random sequences of
