@@ -20,9 +20,13 @@ or::
 Installation
 ------------
 
-Assuming you have ``rustc`` and ``cargo`` installed, you should be able to
-build ``markovpass`` with ``cargo build --release``. ``markovpass`` is just a
-standalone binary, and you can put it wherever you like.
+Check for binary releases here_.
+
+.. _here: https://github.com/julianandrews/markovpass/releases/
+
+Alternativey, assuming you have ``rustc`` and ``cargo`` installed, you should
+be able to build ``markovpass`` with ``cargo build --release``. ``markovpass``
+is just a standalone binary, and you can put it wherever you like.
 
 Usage
 -----
