@@ -1,3 +1,4 @@
+#[cfg(feature = "benchmarks")]
 extern crate test;
 
 mod corpus;
@@ -44,6 +45,7 @@ mod tests {
         assert_eq!(passphrases.len(), 5);
     }
 
+    #[cfg(feature = "benchmarks")]
     #[bench]
     fn bench_gen_passphrases(b: &mut test::Bencher) {
         let options = get_test_options();
@@ -67,3 +69,5 @@ mod tests {
         }
     }
 }
+
+mod bench {}

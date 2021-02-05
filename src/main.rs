@@ -1,4 +1,4 @@
-#![feature(test)]
+#![cfg_attr(feature = "benchmarks", feature(test))]
 
 mod args;
 mod lib;

@@ -8,6 +8,9 @@ edition = "2018"
 getopts = "0.2"
 rand = "0.7.3"
 
+[features]
+benchmarks = []
+
 [[bin]]
 path = "src/main.rs"
 name = "markovpass"
