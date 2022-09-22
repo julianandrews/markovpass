@@ -10,20 +10,17 @@ jobs:
         build: [linux, macos, windows]
         include:
         - build: linux
-          os: ubuntu-18.04
+          os: ubuntu-latest
           rust: nightly
           target: x86_64-unknown-linux-musl
-          archive-name: markovpass-linux.tar.gz
         - build: macos
           os: macos-latest
           rust: nightly
           target: x86_64-apple-darwin
-          archive-name: markovpass-macos.tar.gz
         - build: windows
           os: windows-2019
           rust: nightly-x86_64-msvc
           target: x86_64-pc-windows-msvc
-          archive-name: markovpass-windows.7z
       fail-fast: false
 
     steps:
@@ -48,21 +45,26 @@ jobs:
       run: strip "target/${{ matrix.target }}/release/markovpass"
 
     - name: Build archive
+      id: build_archive
       shell: bash
       run: |
+        version="$(cargo metadata --format-version 1 | jq -r '[.packages[]|select(.name=="markovpass")][0].version')"
         mkdir archive
-        cp LICENSE README.rst archive/
+        cp LICENSE README.md archive/
         cd archive
         if [ "${{ matrix.build }}" = "windows" ]; then
           cp "../target/${{ matrix.target }}/release/markovpass.exe" ./
-          7z a "${{ matrix.archive-name }}" LICENSE README.rst markovpass.exe
+          name="markovpass-$version-${{ matrix.target }}.7z"
+          7z a "$name" LICENSE README.md markovpass.exe
         else
           cp "../target/${{ matrix.target }}/release/markovpass" ./
-          tar -czf "${{ matrix.archive-name }}" LICENSE README.rst markovpass
+          name="markovpass-$version-${{ matrix.target }}.tar.gz"
+          tar -czf "$name" LICENSE README.md markovpass
         fi
+        echo "::set-output name=name::$name"
 
     - name: Upload archive
       uses: actions/upload-artifact@v1
       with:
-        name: ${{ matrix.archive-name }}
-        path: archive/${{ matrix.archive-name }}
+        name: ${{ steps.build_archive.outputs.name }}
+        path: archive/${{ steps.build_archive.outputs.name }}
