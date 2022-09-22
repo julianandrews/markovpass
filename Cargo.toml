@@ -10,7 +10,8 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.22", features = ["derive"] }
-rand = "0.7.3"
+rand = "0.8.5"
+rand_distr = "0.4.3"
 
 [features]
 benchmarks = []

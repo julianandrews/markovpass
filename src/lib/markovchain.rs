@@ -1,7 +1,5 @@
-extern crate rand;
-
-use rand::distributions::weighted::alias_method::WeightedIndex;
-use rand::prelude::*;
+use rand_distr::weighted_alias::WeightedAliasIndex;
+use rand_distr::Distribution;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -46,7 +44,7 @@ impl<'chain> Iterator for MarkovChainIterator<'chain> {
 struct MarkovNode<T> {
     pub value: T,
     transitions: Vec<T>,
-    dist: WeightedIndex<f64>,
+    dist: WeightedAliasIndex<f64>,
     entropy: f64,
 }
 
@@ -56,7 +54,7 @@ impl<T> MarkovNode<T> {
         Self {
             value,
             transitions: values,
-            dist: WeightedIndex::new(weights).unwrap(),
+            dist: WeightedAliasIndex::new(weights).unwrap(),
             entropy,
         }
     }
@@ -74,7 +72,7 @@ impl<T> MarkovNode<T> {
 pub struct PassphraseMarkovChain<'ngrams> {
     nodes: HashMap<&'ngrams str, MarkovNode<&'ngrams str>>,
     starting_ngrams: Vec<&'ngrams str>,
-    starting_dist: WeightedIndex<f64>,
+    starting_dist: WeightedAliasIndex<f64>,
     starting_entropy: f64,
 }
 
@@ -110,7 +108,7 @@ impl<'ngrams> PassphraseMarkovChain<'ngrams> {
             starting_ngram_weights.push(weight as f64);
         }
         let starting_entropy = weight_entropy(&starting_ngram_weights);
-        let starting_dist = WeightedIndex::new(starting_ngram_weights).unwrap();
+        let starting_dist = WeightedAliasIndex::new(starting_ngram_weights).unwrap();
 
         // Build all the MarkovNodes from the transition counts.
         let mut nodes: HashMap<&str, MarkovNode<&str>> = HashMap::new();
