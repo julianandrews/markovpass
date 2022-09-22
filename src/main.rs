@@ -5,18 +5,22 @@ mod lib;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    let binary_name = args
+        .get(0)
+        .map(String::as_str)
+        .unwrap_or(env!("CARGO_BIN_NAME"));
     let opts = args::build_opts();
-    let parsed_args = match args::parse_args(&opts, &args) {
+    let parsed_args = match args::parse(&opts, &args) {
         Ok(args) => args,
         Err(error) => {
             eprintln!("{}", error);
-            args::print_usage(&args[0], &opts);
+            args::print_usage(binary_name, &opts);
             std::process::exit(1);
         }
     };
 
     if parsed_args.print_help {
-        args::print_usage(&args[0], &opts);
+        args::print_usage(binary_name, &opts);
         return;
     }
 

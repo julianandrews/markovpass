@@ -9,16 +9,16 @@ impl Corpus {
         mut reader: Box<dyn std::io::Read>,
         ngram_length: usize,
         min_word_length: usize,
-    ) -> Result<Corpus, Box<dyn std::error::Error>> {
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         // TODO: Process the input to generate text efficiently.
         let mut text = String::new();
         reader.read_to_string(&mut text)?;
-        let mut text = Corpus::clean_text(&text, min_word_length);
+        let mut text = Self::clean_text(&text, min_word_length);
         let original_byte_length = text.len();
         // Push the first few characters onto the end so we can return `&str`s for the wrap around.
         text.push_str(&text.chars().take(ngram_length).collect::<String>());
 
-        Ok(Corpus {
+        Ok(Self {
             text,
             ngram_length,
             original_byte_length,
@@ -36,7 +36,7 @@ impl Corpus {
         let text = text.to_lowercase();
         let words = text
             .split_whitespace()
-            .filter_map(|word| Corpus::clean_word(word, min_word_length));
+            .filter_map(|word| Self::clean_word(word, min_word_length));
 
         // Insert a space at the start of the corpus so that every word begins with a space.
         Some("")
@@ -58,13 +58,13 @@ impl Corpus {
     }
 }
 
-struct Ngrams<'a> {
-    corpus: &'a Corpus,
+struct Ngrams<'corpus> {
+    corpus: &'corpus Corpus,
     byte_index: usize,
 }
 
-impl<'a> Iterator for Ngrams<'a> {
-    type Item = &'a str;
+impl<'corpus> Iterator for Ngrams<'corpus> {
+    type Item = &'corpus str;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.byte_index >= self.corpus.original_byte_length {
@@ -80,8 +80,7 @@ impl<'a> Iterator for Ngrams<'a> {
         let first_char_byte_length = ngram_char_indices.next().unwrap().0;
         let ngram_byte_length = ngram_char_indices
             .last()
-            .map(|(i, _)| i)
-            .unwrap_or(first_char_byte_length);
+            .map_or(first_char_byte_length, |(i, _)| i);
         let ngram_start_index = self.byte_index;
         self.byte_index += first_char_byte_length;
 

@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone)]
 pub struct GenPassphraseOptions {
     pub filename: Option<PathBuf>,
     pub number: usize,

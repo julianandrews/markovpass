@@ -58,7 +58,7 @@ minimum word length will lead to longer passphrases for the same entropy.
 
 If you want a quick easy way to try it out (and you have `curl` installed)
 
-    curl -s http://www.gutenberg.org/files/1342/1342.txt | markovpass
+    curl -s https://www.gutenberg.org/files/1342/1342-0.txt | markovpass
 
 should download "Pride and Prejudice" from Project Gutenberg and use it as
 your corpus. I keep a folder with a bunch of text files in it and use

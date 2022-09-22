@@ -8,21 +8,21 @@ const DEFAULT_MIN_WORD_LENGTH: usize = 5;
 use std::fmt;
 use std::path::PathBuf;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum UsageError {
-    ArgumentParseError,
-    TooManyInputsError,
-    NgramLengthError,
-    FlagParseError,
+    InvalidArguments,
+    TooManyInputs,
+    ZeroNgramLength,
+    InvalidArgumentValue,
 }
 
 impl fmt::Display for UsageError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            UsageError::ArgumentParseError => write!(f, "Failed to parse arguments."),
-            UsageError::TooManyInputsError => write!(f, "Too many inputs."),
-            UsageError::NgramLengthError => write!(f, "Ngram length must be greater than one."),
-            UsageError::FlagParseError => write!(f, "Failed to parse flag."),
+            Self::InvalidArguments => write!(f, "Failed to parse arguments."),
+            Self::TooManyInputs => write!(f, "Too many inputs."),
+            Self::ZeroNgramLength => write!(f, "Ngram length must be greater than one."),
+            Self::InvalidArgumentValue => write!(f, "Failed to parse flag."),
         }
     }
 }
@@ -70,7 +70,8 @@ pub fn build_opts() -> getopts::Options {
     opts
 }
 
-pub struct MarkovpassArgs {
+#[derive(Debug, Clone)]
+pub struct Args {
     pub filename: Option<PathBuf>,
     pub number: usize,
     pub min_entropy: f64,
@@ -80,14 +81,14 @@ pub struct MarkovpassArgs {
     pub show_entropy: bool,
 }
 
-pub fn parse_args(opts: &getopts::Options, args: &[String]) -> Result<MarkovpassArgs, UsageError> {
+pub fn parse(opts: &getopts::Options, args: &[String]) -> Result<Args, UsageError> {
     let matches = opts
-        .parse(&args[1..])
-        .map_err(|_| UsageError::ArgumentParseError)?;
+        .parse(args.get(1..).unwrap_or(&[]))
+        .map_err(|_| UsageError::InvalidArguments)?;
 
     // TODO: Add support for multiple file arguments.
     if matches.free.len() > 1 {
-        return Err(UsageError::TooManyInputsError);
+        return Err(UsageError::TooManyInputs);
     };
 
     let number = parse_flag_or_default(&matches, "n", DEFAULT_NUMBER)?;
@@ -98,7 +99,7 @@ pub fn parse_args(opts: &getopts::Options, args: &[String]) -> Result<Markovpass
     let show_entropy = matches.opt_present("show-entropy");
 
     if ngram_length <= 1 {
-        return Err(UsageError::NgramLengthError);
+        return Err(UsageError::ZeroNgramLength);
     };
 
     let filename = if matches.free.is_empty() || matches.free[0] == "-" {
@@ -107,7 +108,7 @@ pub fn parse_args(opts: &getopts::Options, args: &[String]) -> Result<Markovpass
         Some(PathBuf::from(matches.free[0].clone()))
     };
 
-    Ok(MarkovpassArgs {
+    Ok(Args {
         filename,
         number,
         min_entropy,
@@ -132,6 +133,5 @@ fn parse_flag_or_default<T: ::std::str::FromStr>(
     matches
         .opt_str(flag)
         .map(|c| c.parse::<T>())
-        .unwrap_or(Ok(default))
-        .map_err(|_| UsageError::FlagParseError)
+        .map_or(Ok(default), |_| Err(UsageError::InvalidArgumentValue))
 }

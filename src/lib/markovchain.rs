@@ -5,11 +5,11 @@ use rand::prelude::*;
 use std::collections::HashMap;
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MarkovChainError {
     NoNgrams,
-    NoEntropy,
-    NoStartOfWordEntropy,
+    ZeroEntropy,
+    ZeroStartOfWordEntropy,
 }
 
 impl std::error::Error for MarkovChainError {}
@@ -17,26 +17,26 @@ impl std::error::Error for MarkovChainError {}
 impl fmt::Display for MarkovChainError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            MarkovChainError::NoNgrams => write!(f, "No ngrams found in cleaned input."),
-            MarkovChainError::NoEntropy => write!(f, "Cleaned input has no entropy."),
-            MarkovChainError::NoStartOfWordEntropy => {
+            Self::NoNgrams => write!(f, "No ngrams found in cleaned input."),
+            Self::ZeroEntropy => write!(f, "Cleaned input has no entropy."),
+            Self::ZeroStartOfWordEntropy => {
                 write!(f, "Cleaned input has not start of word entropy.")
             }
         }
     }
 }
 
-struct MarkovChainIterator<'a> {
-    markov_chain: &'a PassphraseMarkovChain<'a>,
-    current: &'a str,
+struct MarkovChainIterator<'chain> {
+    markov_chain: &'chain PassphraseMarkovChain<'chain>,
+    current: &'chain str,
 }
 
-impl<'a> Iterator for MarkovChainIterator<'a> {
-    type Item = &'a str;
+impl<'chain> Iterator for MarkovChainIterator<'chain> {
+    type Item = &'chain str;
 
     fn next(&mut self) -> Option<Self::Item> {
         let last = self.current;
-        self.current = self.markov_chain.get_next_ngram(&self.current);
+        self.current = self.markov_chain.get_next_ngram(self.current);
 
         Some(last)
     }
@@ -51,9 +51,9 @@ struct MarkovNode<T> {
 }
 
 impl<T> MarkovNode<T> {
-    pub fn new(value: T, values: Vec<T>, weights: Vec<f64>) -> MarkovNode<T> {
+    pub fn new(value: T, values: Vec<T>, weights: Vec<f64>) -> Self {
         let entropy = weight_entropy(&weights);
-        MarkovNode {
+        Self {
             value,
             transitions: values,
             dist: WeightedIndex::new(weights).unwrap(),
@@ -65,23 +65,23 @@ impl<T> MarkovNode<T> {
         &self.transitions[self.dist.sample(&mut rand::rngs::OsRng)]
     }
 
-    pub fn entropy(&self) -> f64 {
+    pub const fn entropy(&self) -> f64 {
         self.entropy
     }
 }
 
 #[derive(Debug)]
-pub struct PassphraseMarkovChain<'a> {
-    nodes: HashMap<&'a str, MarkovNode<&'a str>>,
-    starting_ngrams: Vec<&'a str>,
+pub struct PassphraseMarkovChain<'ngrams> {
+    nodes: HashMap<&'ngrams str, MarkovNode<&'ngrams str>>,
+    starting_ngrams: Vec<&'ngrams str>,
     starting_dist: WeightedIndex<f64>,
     starting_entropy: f64,
 }
 
-impl<'a> PassphraseMarkovChain<'a> {
+impl<'ngrams> PassphraseMarkovChain<'ngrams> {
     pub fn new(
-        ngrams: impl Iterator<Item = &'a str>,
-    ) -> Result<PassphraseMarkovChain<'a>, MarkovChainError> {
+        ngrams: impl Iterator<Item = &'ngrams str>,
+    ) -> Result<PassphraseMarkovChain<'ngrams>, MarkovChainError> {
         // Count transitions and viable starting ngrams.
         // To get natural sounding words, starting ngrams should be at word start.
         let mut transition_counters: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
@@ -105,7 +105,7 @@ impl<'a> PassphraseMarkovChain<'a> {
         // Generate the starting ngram probability distribution.
         let mut starting_ngrams = Vec::with_capacity(starting_ngram_counts.len());
         let mut starting_ngram_weights = Vec::with_capacity(starting_ngram_counts.len());
-        for (value, weight) in starting_ngram_counts.into_iter() {
+        for (value, weight) in starting_ngram_counts {
             starting_ngrams.push(value);
             starting_ngram_weights.push(weight as f64);
         }
@@ -115,10 +115,10 @@ impl<'a> PassphraseMarkovChain<'a> {
         // Build all the MarkovNodes from the transition counts.
         let mut nodes: HashMap<&str, MarkovNode<&str>> = HashMap::new();
         let mut total_entropy: f64 = 0.0;
-        for (ngram, transition_counts) in transition_counters.into_iter() {
+        for (ngram, transition_counts) in transition_counters {
             let mut values = Vec::with_capacity(transition_counts.len());
             let mut weights = Vec::with_capacity(transition_counts.len());
-            for (value, weight) in transition_counts.into_iter() {
+            for (value, weight) in transition_counts {
                 values.push(value);
                 weights.push(weight as f64);
             }
@@ -129,9 +129,10 @@ impl<'a> PassphraseMarkovChain<'a> {
         }
 
         if total_entropy == 0.0 {
-            return Err(MarkovChainError::NoEntropy);
-        } else if starting_entropy == 0.0 {
-            return Err(MarkovChainError::NoStartOfWordEntropy);
+            return Err(MarkovChainError::ZeroEntropy);
+        }
+        if starting_entropy == 0.0 {
+            return Err(MarkovChainError::ZeroStartOfWordEntropy);
         }
 
         Ok(PassphraseMarkovChain {
@@ -148,7 +149,7 @@ impl<'a> PassphraseMarkovChain<'a> {
 
         for ngram in self.iter() {
             selected_ngrams.push(ngram);
-            entropy += self.ngram_entropy(&ngram);
+            entropy += self.ngram_entropy(ngram);
             if entropy >= min_entropy && ngram.ends_with(' ') {
                 break;
             }
@@ -173,8 +174,7 @@ impl<'a> PassphraseMarkovChain<'a> {
     }
 
     fn get_starting_ngram(&self) -> &str {
-        &self
-            .nodes
+        self.nodes
             .get(&self.starting_ngrams[self.starting_dist.sample(&mut rand::rngs::OsRng)])
             .unwrap()
             .value
@@ -193,7 +193,7 @@ fn weight_entropy(weights: &[f64]) -> f64 {
     let total: f64 = weights.iter().sum();
     weights.iter().fold(0.0, |acc, weight| {
         let prob = weight / total;
-        acc - prob * prob.log(2.0)
+        acc - prob * prob.log2()
     })
 }
 
@@ -229,7 +229,7 @@ mod tests {
         let ngrams = vec![" ab", "abc", "bcd", "cd ", "d a"];
         let result = PassphraseMarkovChain::new(ngrams.into_iter());
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), MarkovChainError::NoEntropy);
+        assert_eq!(result.unwrap_err(), MarkovChainError::ZeroEntropy);
     }
 
     #[test]
@@ -239,6 +239,9 @@ mod tests {
         ];
         let result = PassphraseMarkovChain::new(ngrams.into_iter());
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), MarkovChainError::NoStartOfWordEntropy);
+        assert_eq!(
+            result.unwrap_err(),
+            MarkovChainError::ZeroStartOfWordEntropy
+        );
     }
 }
