@@ -13,11 +13,11 @@ generates human sounding phrases, which aim to strike a balance between ease of
 memorization, length, and passphrases quality. The passphrases produced look
 something like
 
-    qurken ret which bettle nurence
+    soluttingle misfy curther requenturn
 
 or
 
-    facupid trible taxed partice
+    beforeing licting stroducted shall
 
 Installation
 ------------
@@ -32,15 +32,30 @@ is just a standalone binary, and you can put it wherever you like.
 Usage
 -----
 
-    Usage: markovpass [FILE] [options]
+    USAGE:
+        markovpass [OPTIONS] [FILES]...
 
-    Options:
-        -n NUM              Number of passphrases to generate (default 1)
-        -e MINENTROPY       Minimum entropy (default 60)
-        -l LENGTH           NGram length (default 3)
-        -w LENGTH           Minimum word length for corpus (default 5)
-        -h, --help          Display this help and exit
-            --show-entropy  Print the entropy for each passphrase
+    ARGS:
+        <FILES>...    Files to use as markovchain input corpus
+
+    OPTIONS:
+        -n <NUMBER>                 Number of passphrases to generate [default: 1]
+        -e <MIN_ENTROPY>            Minimum entropy [default: 60]
+        -l <NGRAM_LENGTH>           Ngram length [default: 3]
+        -w <MIN_WORD_LENGTH>        Minimum word length for corpus [default: 5]
+            --show-entropy          Print the entropy for each passphrase
+        -h, --help                  Print help information
+        -V, --version               Print version information
+
+        Usage: markovpass [FILE] [options]
+
+        Options:
+            -n NUM              Number of passphrases to generate (default 1)
+            -e MINENTROPY       Minimum entropy (default 60)
+            -l LENGTH           NGram length (default 3)
+            -w LENGTH           Minimum word length for corpus (default 5)
+            -h, --help          Display this help and exit
+                --show-entropy  Print the entropy for each passphrase
 
 `markovpass` requires a corpus to work with. The corpus can be provided via
 the `FILE` argument. Alternatively, `markovpass` will look for data on
