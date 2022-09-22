@@ -18,7 +18,7 @@ impl fmt::Display for MarkovChainError {
             Self::NoNgrams => write!(f, "No ngrams found in cleaned input."),
             Self::ZeroEntropy => write!(f, "Cleaned input has no entropy."),
             Self::ZeroStartOfWordEntropy => {
-                write!(f, "Cleaned input has not start of word entropy.")
+                write!(f, "Cleaned input has no start of word entropy.")
             }
         }
     }
