@@ -41,8 +41,3 @@ the better. If you want a quick and easy way to try it out run:
     curl -s https://www.gutenberg.org/files/1342/1342-0.txt | markovpass
 
 to use "Pride and Predjudice" from Project Gutenberg."""
-
-
-[[bin]]
-path = "src/main.rs"
-name = "markovpass"
