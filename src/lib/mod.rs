@@ -6,11 +6,12 @@ mod markovchain;
 
 use std::fs::File;
 use std::io;
+use std::io::Read;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct GenPassphraseOptions {
-    pub filename: Option<PathBuf>,
+    pub files: Vec<PathBuf>,
     pub number: usize,
     pub min_entropy: f64,
     pub ngram_length: usize,
@@ -20,10 +21,7 @@ pub struct GenPassphraseOptions {
 pub fn gen_passphrases(
     options: &GenPassphraseOptions,
 ) -> Result<Vec<(String, f64)>, Box<dyn std::error::Error>> {
-    let reader: Box<dyn io::Read> = match &options.filename {
-        Some(filename) => Box::new(io::BufReader::new(File::open(&filename)?)),
-        None => Box::new(io::stdin()),
-    };
+    let reader = get_input_reader(&options.files)?;
     let corpus = corpus::Corpus::new(reader, options.ngram_length, options.min_word_length)?;
     let chain = markovchain::PassphraseMarkovChain::new(corpus.ngrams())?;
 
@@ -32,6 +30,19 @@ pub fn gen_passphrases(
         .collect();
 
     Ok(passphrases)
+}
+
+fn get_input_reader(files: &[PathBuf]) -> Result<Box<dyn io::Read>, Box<dyn std::error::Error>> {
+    match files {
+        [head, tail @ ..] => {
+            let mut reader: Box<dyn io::Read> = Box::new(io::BufReader::new(File::open(head)?));
+            for f in tail {
+                reader = Box::new(reader.chain(io::BufReader::new(File::open(f)?)));
+            }
+            Ok(reader)
+        }
+        [] => Ok(Box::new(io::stdin())),
+    }
 }
 
 #[cfg(test)]
@@ -62,7 +73,7 @@ mod tests {
 
     fn get_test_options() -> GenPassphraseOptions {
         GenPassphraseOptions {
-            filename: Some(get_testdata_pathbuf()),
+            files: vec![get_testdata_pathbuf()],
             number: 5,
             min_entropy: 80.0,
             ngram_length: 3,

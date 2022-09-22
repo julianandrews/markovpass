@@ -8,7 +8,7 @@ fn main() {
     let args = Args::parse();
 
     let gen_passphrase_options = lib::GenPassphraseOptions {
-        filename: args.filename,
+        files: args.files,
         number: args.number,
         min_entropy: args.min_entropy,
         ngram_length: args.ngram_length,
@@ -34,9 +34,9 @@ fn main() {
 #[derive(Parser, Debug, Clone)]
 #[clap(author, version, about, setting = AppSettings::DeriveDisplayOrder)]
 struct Args {
-    /// Markovchain corpus
+    /// Files to use as markovchain input corpus
     #[clap(value_parser)]
-    pub filename: Option<std::path::PathBuf>,
+    pub files: Vec<std::path::PathBuf>,
 
     /// Number of passphrases to generate
     #[clap(short = 'n', value_parser, default_value_t = 1)]
