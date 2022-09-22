@@ -1,7 +1,11 @@
 [package]
 name = "markovpass"
-version = "1.0.1"
+version = "1.0.3"
 authors = ["Julian Andrews <jandrews271@gmail.com>"]
+license = "BSD-3-Clause"
+description = "Markov chain based passphrase generator"
+readme = "README.md"
+repository = "https://github.com/julianandrews/markovpass"
 edition = "2018"
 
 [dependencies]
@@ -10,6 +14,34 @@ rand = "0.7.3"
 
 [features]
 benchmarks = []
+
+[package.metadata.deb]
+extended-description = """\
+A markov chain based passphrase generator.
+
+Generates randomized passphrases based on a Markov chain along with the \
+total Shannon entropy of the nodes traversed. Long random sequences of \
+characters are difficult to remember. Shorter, or less random sequences \
+are bad passphrases. Long sequences of words (xkcd style passphrases) \
+are relatively easy to remember but take a long time to type.  Markovpass \
+generates human sounding phrases, which aim to strike a balance between \
+ease of memorization, length, and passphrases quality. The passphrases \
+produced look something like
+
+    qurken ret which bettle nurence
+
+or
+
+    facupid trible taxed partice
+
+Markovpass requires a corpus of human language to work from - the longer the
+better. If you want a quick and easy way to try it out run:
+
+    curl -s http://www.gutenberg.org/files/1342/1342.txt | markovpass
+
+to download "Pride and Predjudice from Project Gutenberg and use that as a
+corpus."""
+
 
 [[bin]]
 path = "src/main.rs"
