@@ -1,6 +1,6 @@
 [package]
 name = "markovpass"
-version = "1.0.4"
+version = "1.1.0"
 authors = ["Julian Andrews <jandrews271@gmail.com>"]
 license = "BSD-3-Clause"
 description = "Markov chain based passphrase generator"
@@ -9,7 +9,7 @@ repository = "https://github.com/julianandrews/markovpass"
 edition = "2021"
 
 [dependencies]
-getopts = "0.2"
+clap = { version = "3.2.22", features = ["derive"] }
 rand = "0.7.3"
 
 [features]

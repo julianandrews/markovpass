@@ -1,35 +1,18 @@
 #![cfg_attr(feature = "benchmarks", feature(test))]
 
-mod args;
 mod lib;
 
-fn main() {
-    let args: Vec<String> = std::env::args().collect();
-    let binary_name = args
-        .get(0)
-        .map(String::as_str)
-        .unwrap_or(env!("CARGO_BIN_NAME"));
-    let opts = args::build_opts();
-    let parsed_args = match args::parse(&opts, &args) {
-        Ok(args) => args,
-        Err(error) => {
-            eprintln!("{}", error);
-            args::print_usage(binary_name, &opts);
-            std::process::exit(1);
-        }
-    };
+use clap::{AppSettings, Parser};
 
-    if parsed_args.print_help {
-        args::print_usage(binary_name, &opts);
-        return;
-    }
+fn main() {
+    let args = Args::parse();
 
     let gen_passphrase_options = lib::GenPassphraseOptions {
-        filename: parsed_args.filename,
-        number: parsed_args.number,
-        min_entropy: parsed_args.min_entropy,
-        ngram_length: parsed_args.ngram_length,
-        min_word_length: parsed_args.min_word_length,
+        filename: args.filename,
+        number: args.number,
+        min_entropy: args.min_entropy,
+        ngram_length: args.ngram_length,
+        min_word_length: args.min_word_length,
     };
     let passphrases = match lib::gen_passphrases(&gen_passphrase_options) {
         Ok(passphrases) => passphrases,
@@ -40,10 +23,38 @@ fn main() {
     };
 
     for (passphrase, entropy) in passphrases {
-        if parsed_args.show_entropy {
+        if args.show_entropy {
             println!("{} <{}>", passphrase, entropy);
         } else {
             println!("{}", passphrase);
         }
     }
+}
+
+#[derive(Parser, Debug, Clone)]
+#[clap(author, version, about, setting = AppSettings::DeriveDisplayOrder)]
+struct Args {
+    /// Markovchain corpus
+    #[clap(value_parser)]
+    pub filename: Option<std::path::PathBuf>,
+
+    /// Number of passphrases to generate
+    #[clap(short = 'n', value_parser, default_value_t = 1)]
+    pub number: usize,
+
+    /// Minimum entropy
+    #[clap(short = 'e', value_parser, default_value_t = 60.0)]
+    pub min_entropy: f64,
+
+    /// Ngram length
+    #[clap(short = 'l', value_parser, default_value_t = 3)]
+    pub ngram_length: usize,
+
+    /// Minimum word length for corpus
+    #[clap(short = 'w', value_parser, default_value_t = 5)]
+    pub min_word_length: usize,
+
+    /// Print the entropy for each passphrase
+    #[clap(long, value_parser, default_value_t = false)]
+    pub show_entropy: bool,
 }
