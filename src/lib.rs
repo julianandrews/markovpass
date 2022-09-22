@@ -1,3 +1,4 @@
+#![cfg_attr(feature = "benchmarks", feature(test))]
 #[cfg(feature = "benchmarks")]
 extern crate test;
 

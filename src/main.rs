@@ -1,20 +1,16 @@
-#![cfg_attr(feature = "benchmarks", feature(test))]
-
-mod lib;
-
 use clap::{AppSettings, Parser};
 
 fn main() {
     let args = Args::parse();
 
-    let gen_passphrase_options = lib::GenPassphraseOptions {
+    let gen_passphrase_options = markovpass::GenPassphraseOptions {
         files: args.files,
         number: args.number,
         min_entropy: args.min_entropy,
         ngram_length: args.ngram_length,
         min_word_length: args.min_word_length,
     };
-    let passphrases = match lib::gen_passphrases(&gen_passphrase_options) {
+    let passphrases = match markovpass::gen_passphrases(&gen_passphrase_options) {
         Ok(passphrases) => passphrases,
         Err(error) => {
             eprintln!("{}", error);
