@@ -68,3 +68,30 @@ jobs:
       with:
         name: ${{ steps.build_archive.outputs.name }}
         path: archive/${{ steps.build_archive.outputs.name }}
+  make_deb:
+    name: Make .deb
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+        profile: minimal
+        override: true
+
+    - name: Build .deb
+      id: deb
+      run: |
+        cargo install cargo-deb
+        deb_file=$(cargo deb)
+        echo "::set-output name=name::$(basename $deb_file)"
+
+    - name: Upload .deb
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ steps.deb.outputs.name }}
+        path: target/debian/${{ steps.deb.outputs.name }}
