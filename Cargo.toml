@@ -16,6 +16,9 @@ rand_distr = "0.4.3"
 [features]
 benchmarks = []
 
+[profile.release]
+strip = "symbols"
+
 [package.metadata.deb]
 extended-description = """\
 A markov chain based passphrase generator.

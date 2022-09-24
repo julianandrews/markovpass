@@ -7,20 +7,31 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [linux, macos, windows]
+        build: [linux-gnu, linux-musl, macos, windows]
+        arch: [x86_64, aarch64]
+        exclude:
+          - build: windows
+            arch: aarch64
         include:
-        - build: linux
-          os: ubuntu-latest
-          rust: nightly
-          target: x86_64-unknown-linux-musl
-        - build: macos
-          os: macos-latest
-          rust: nightly
-          target: x86_64-apple-darwin
-        - build: windows
-          os: windows-2019
-          rust: nightly-x86_64-msvc
-          target: x86_64-pc-windows-msvc
+          - build: linux-gnu
+            os: ubuntu-latest
+            target-os: unknown-linux-gnu
+            rust: stable
+          - build: linux-musl
+            os: ubuntu-latest
+            target-os: unknown-linux-musl
+            rust: stable
+          - build: macos
+            os: macos-latest
+            target-os: apple-darwin
+            rust: stable
+          - build: windows
+            os: windows-latest
+            target-os: pc-windows-msvc
+          - build: windows
+            target-os: pc-windows-msvc
+            arch: x86_64
+            rust: stable-x86_64-msvc
       fail-fast: false
 
     steps:
@@ -33,16 +44,14 @@ jobs:
         toolchain: ${{ matrix.rust }}
         profile: minimal
         override: true
-        target: ${{ matrix.target }}
+        target: ${{ matrix.arch }}-${{ matrix.target-os }}
 
     - name: Build binary
-      run: cargo build --verbose --release --target ${{ matrix.target }}
-      env:
-        RUST_BACKTRACE: 1
-
-    - name: Strip binary (linux and macos)
-      if: matrix.build == 'linux' || matrix.build == 'macos'
-      run: strip "target/${{ matrix.target }}/release/markovpass"
+      uses: actions-rs/cargo@v1
+      with:
+        use-cross: true
+        command: build
+        args: --release --target ${{ matrix.arch }}-${{ matrix.target-os }}
 
     - name: Build archive
       id: build_archive
@@ -53,12 +62,12 @@ jobs:
         cp LICENSE README.md archive/
         cd archive
         if [ "${{ matrix.build }}" = "windows" ]; then
-          cp "../target/${{ matrix.target }}/release/markovpass.exe" ./
-          name="markovpass-$version-${{ matrix.target }}.7z"
+          cp "../target/${{ matrix.arch }}-${{ matrix.target-os }}/release/markovpass.exe" ./
+          name="markovpass-$version-${{ matrix.arch }}-${{ matrix.target-os }}.7z"
           7z a "$name" LICENSE README.md markovpass.exe
         else
-          cp "../target/${{ matrix.target }}/release/markovpass" ./
-          name="markovpass-$version-${{ matrix.target }}.tar.gz"
+          cp "../target/${{ matrix.arch }}-${{ matrix.target-os }}/release/markovpass" ./
+          name="markovpass-$version-${{ matrix.arch }}-${{ matrix.target-os }}.tar.gz"
           tar -czf "$name" LICENSE README.md markovpass
         fi
         echo "::set-output name=name::$name"
@@ -79,7 +88,7 @@ jobs:
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: stable
         profile: minimal
         override: true
 
