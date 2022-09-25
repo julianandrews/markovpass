@@ -36,11 +36,11 @@ pub fn gen_passphrases(
 fn get_input_reader(files: &[PathBuf]) -> Result<Box<dyn io::Read>, Box<dyn std::error::Error>> {
     match files {
         [head, tail @ ..] => {
-            let mut reader: Box<dyn io::Read> = Box::new(io::BufReader::new(File::open(head)?));
+            let mut reader: Box<dyn io::Read> = Box::new(File::open(head)?);
             for f in tail {
-                reader = Box::new(reader.chain(io::BufReader::new(File::open(f)?)));
+                reader = Box::new(reader.chain(File::open(f)?));
             }
-            Ok(reader)
+            Ok(Box::new(io::BufReader::new(reader)))
         }
         [] => Ok(Box::new(io::stdin())),
     }
