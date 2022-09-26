@@ -39,7 +39,7 @@ or:
 
     beforeing licting stroducted shall
 
-By default, markovchain is distributed with a corpus of public domain \
+By default, markovpass is distributed with a corpus of public domain \
 selections from Jane Austen, H.P. Lovecraft, and P.G. Wodehouse. See \
 the builtin help for information on customizing your corpus."""
 assets = [
