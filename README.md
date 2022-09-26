@@ -30,6 +30,21 @@ is just a standalone binary, and you can put it wherever you like.
 Usage
 -----
 
+    USAGE:
+        markovpass [OPTIONS] [FILES]...
+
+    ARGS:
+        <FILES>...    Files to use as markov chain input corpus. Use '-' to read from stdin
+
+    OPTIONS:
+        -n <NUMBER>                 Number of passphrases to generate [default: 1]
+        -e <MIN_ENTROPY>            Minimum entropy [default: 60]
+        -l <NGRAM_LENGTH>           Ngram length [default: 3]
+        -w <MIN_WORD_LENGTH>        Minimum word length for corpus [default: 5]
+            --show-entropy          Print the entropy for each passphrase
+        -h, --help                  Print help information
+        -V, --version               Print version information
+
 Markovpass requires a corpus to work with. By default it will look for files in
 platform appropriate data directories (for instance `~/.local/share/markovpass`
 or `/usr/share/markovpass` on Linux). Alternatively The corpus can be provided
