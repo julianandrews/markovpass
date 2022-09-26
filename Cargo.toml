@@ -1,6 +1,6 @@
 [package]
 name = "markovpass"
-version = "1.2.1"
+version = "2.0.0"
 authors = ["Julian Andrews <jandrews271@gmail.com>"]
 license = "BSD-3-Clause"
 description = "Markov chain based passphrase generator"
@@ -10,6 +10,7 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "3.2.22", features = ["derive"] }
+directories = "4.0.1"
 rand = "0.8.5"
 rand_distr = "0.4.3"
 
@@ -32,15 +33,17 @@ generates human sounding phrases, which aim to strike a balance between \
 ease of memorization, length, and passphrases quality. The passphrases \
 produced look something like:
 
-    qurken ret which bettle nurence
+    soluttingle misfy curther requenturn
 
 or:
 
-    facupid trible taxed partice
+    beforeing licting stroducted shall
 
-Markovpass requires a corpus of human language to work from - the longer \
-the better. If you want a quick and easy way to try it out run:
-
-    curl -s https://www.gutenberg.org/files/1342/1342-0.txt | markovpass
-
-to use "Pride and Predjudice" from Project Gutenberg."""
+By default, markovchain is distributed with a corpus of public domain \
+selections from Jane Austen, H.P. Lovecraft, and P.G. Wodehouse. See \
+the builtin help for information on customizing your corpus."""
+assets = [
+    ["target/release/markovpass", "/usr/bin/", "755"],
+    ["README.md", "/usr/share/doc/", "644"],
+    ["pkg/*", "/usr/share/markovpass/", "644"],
+]
