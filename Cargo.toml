@@ -1,6 +1,6 @@
 [package]
 name = "markovpass"
-version = "2.0.0"
+version = "2.0.1"
 authors = ["Julian Andrews <jandrews271@gmail.com>"]
 license = "BSD-3-Clause"
 description = "Markov chain based passphrase generator"
@@ -44,6 +44,6 @@ selections from Jane Austen, H.P. Lovecraft, and P.G. Wodehouse. See \
 the builtin help for information on customizing your corpus."""
 assets = [
     ["target/release/markovpass", "/usr/bin/", "755"],
-    ["README.md", "/usr/share/doc/", "644"],
+    ["README.md", "/usr/share/doc/markovpass/", "644"],
     ["pkg/*", "/usr/share/markovpass/", "644"],
 ]
