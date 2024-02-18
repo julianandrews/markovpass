@@ -72,7 +72,7 @@ fn get_corpus_files(files: &[String]) -> std::io::Result<Vec<std::path::PathBuf>
 fn get_data_files() -> std::io::Result<Vec<std::path::PathBuf>> {
     let mut data_dirs = directories::ProjectDirs::from_path("markovpass".into())
         .map(|pds| vec![pds.data_dir().to_path_buf()])
-        .unwrap_or_else(Vec::new);
+        .unwrap_or_default();
     if cfg!(target_os = "linux") {
         data_dirs.extend(
             std::env::var("XDG_DATA_DIRS")

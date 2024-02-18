@@ -95,7 +95,7 @@ impl<'ngrams> PassphraseMarkovChain<'ngrams> {
             let next_ngram = ngrams.peek().unwrap_or(&first_ngram);
             *transition_counters
                 .entry(current_ngram)
-                .or_insert_with(HashMap::new)
+                .or_default()
                 .entry(next_ngram)
                 .or_insert(0) += 1;
         }
