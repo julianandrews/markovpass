@@ -36,6 +36,25 @@ directory and `XDG_DATA_DIRS`, so it acts as a fallback when the user has not
 provided a corpus. Leaving the variable unset preserves the normal search
 behavior.
 
+Nix
+---
+
+This repository is a flake. Run, build, or install it directly:
+
+    nix run github:julianandrews/markovpass
+    nix build
+    nix profile install .
+
+The package installs the bundled corpus in `share/markovpass` and compiles that
+location in as the fallback default, so no separate corpus setup is needed. For
+development:
+
+    nix develop
+    cargo test
+
+The dev shell points `MARKOVPASS_DEFAULT_CORPUS_DIR` at the flake's `pkg/`
+directory, so `cargo run` uses the bundled corpus as well.
+
 Usage
 -----
 
