@@ -81,6 +81,12 @@ fn get_data_files() -> std::io::Result<Vec<std::path::PathBuf>> {
                 .map(|s| std::path::PathBuf::from(s).join("markovpass")),
         );
     }
+    // A packager can embed a default corpus location at build time. This is a
+    // fallback: the user data directory and XDG_DATA_DIRS are still searched
+    // first.
+    if let Some(dir) = option_env!("MARKOVPASS_DEFAULT_CORPUS_DIR") {
+        data_dirs.push(std::path::PathBuf::from(dir));
+    }
     for dir in &data_dirs {
         if dir.exists() {
             let entries = std::fs::read_dir(dir)?.collect::<Result<Vec<_>, _>>()?;

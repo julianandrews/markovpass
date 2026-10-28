@@ -27,6 +27,15 @@ Alternatively, assuming you have `rustc` and `cargo` installed, you should be
 able to build markovpass with `cargo build --release`. Markovpass
 is just a standalone binary, and you can put it wherever you like.
 
+Packagers can bake in a default corpus directory at build time:
+
+    MARKOVPASS_DEFAULT_CORPUS_DIR=/usr/share/markovpass cargo build --release
+
+The value must be an absolute path. It is searched after the platform data
+directory and `XDG_DATA_DIRS`, so it acts as a fallback when the user has not
+provided a corpus. Leaving the variable unset preserves the normal search
+behavior.
+
 Usage
 -----
 
